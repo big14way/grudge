@@ -11,7 +11,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createPublicClient, encodeFunctionData, http, parseAbi } from "viem";
+import { createPublicClient, createWalletClient, encodeFunctionData, http, parseAbi } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { log } from "./render.js";
 
@@ -131,10 +132,17 @@ export async function publicScore(wallet, client = publicClient()) {
  */
 export async function giveFeedback(adapter, { agentId, score, category, commitment, feedbackURI = "" }) {
   const value = BigInt(Math.round(Math.max(0, Math.min(1, score)) * 100));
-  const data = encodeFunctionData({
-    abi: reputationAbi, functionName: "giveFeedback",
-    args: [BigInt(agentId), value, 0, "grudge", category, "", feedbackURI, commitment],
-  });
+  const args = [BigInt(agentId), value, 0, "grudge", category, "", feedbackURI, commitment];
+  if (process.env.FEEDBACK_PRIVATE_KEY && process.env.FEEDBACK_PRIVATE_KEY.length > 10) {
+    // Plain EOA path. The Virtuals-sponsored smart wallet only calls allowlisted ACP
+    // contracts, so the ERC-8004 registry write goes out from the broker's own key.
+    const account = privateKeyToAccount(process.env.FEEDBACK_PRIVATE_KEY);
+    const wallet = createWalletClient({ account, chain: base, transport: http(process.env.BASE_RPC_URL || "https://base-rpc.publicnode.com") });
+    const hash = await wallet.writeContract({ address: REPUTATION, abi: reputationAbi, functionName: "giveFeedback", args });
+    log("CHAIN", `FEEDBACK EOA ${account.address} tx ${hash}  https://basescan.org/tx/${hash}`);
+    return hash;
+  }
+  const data = encodeFunctionData({ abi: reputationAbi, functionName: "giveFeedback", args });
   const res = await adapter.sendCalls(base.id, [{ to: REPUTATION, data, value: 0n }]);
   return [].concat(res)[0];
 }

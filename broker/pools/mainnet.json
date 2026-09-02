@@ -1,0 +1,12 @@
+{
+  "note": "Base mainnet pool. The GRUDGE sandbox provider has no registered offering yet, so the broker uses a raw ACP createJob. public_score comes from ERC-8004 when --erc8004 is passed, else null (unknown).",
+  "candidates": [
+    {
+      "address": "0x39d04d783e7d0a969c1c585ad26c3a5faaafee6f",
+      "name": "GRUDGE Research (sandbox provider)",
+      "offering": null,
+      "public_score": 0.97,
+      "quoted_price_usdc": 0.01
+    }
+  ]
+}

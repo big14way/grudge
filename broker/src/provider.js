@@ -34,15 +34,28 @@ async function main() {
   const price = Number(a.price);
   log("PROVIDER", `wallet ${short(address)} mode ${a.mode} price ${price} USDC. Listening for GRUDGE jobs.`);
 
+  const budgeted = new Set();
   agent.on("entry", async (session, entry) => {
     try {
-      if (entry.kind === "message" && entry.contentType === "requirement" && session.status === "open") {
+      if (entry.kind === "message" && entry.contentType === "requirement" && session.status === "open" && !budgeted.has(session.jobId)) {
+        budgeted.add(session.jobId);
         const amount = a.mode === "overcharge" ? price * 2 : price;
         log("PROVIDER", `job ${session.jobId} requirement received (${entry.content.length} chars); setBudget ${amount}`);
         await session.setBudget(AssetToken.usdc(amount, session.chainId));
       }
       if (entry.kind === "system") {
         log("PROVIDER", `job ${session.jobId} ${entry.event.type}`);
+        if (entry.event.type === "job.created" && session.roles.includes("provider")) {
+          // Raw jobs may carry no requirement message. Budget after a short grace period.
+          setTimeout(async () => {
+            if (budgeted.has(session.jobId) || session.status !== "open") return;
+            budgeted.add(session.jobId);
+            const amount = a.mode === "overcharge" ? price * 2 : price;
+            log("PROVIDER", `job ${session.jobId} no requirement after 20s; setBudget ${amount}`);
+            try { await session.setBudget(AssetToken.usdc(amount, session.chainId)); }
+            catch (err) { log("PROVIDER", `setBudget failed: ${err.shortMessage || err.message}`); }
+          }, 20_000);
+        }
         if (entry.event.type === "job.funded") {
           const text = a.mode === "burn" ? BURN : GOOD;
           await session.submit(text);

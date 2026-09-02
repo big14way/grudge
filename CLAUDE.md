@@ -21,6 +21,15 @@ Full brief lives in the first commit's conversation; key constraints repeated he
 - Commitment hash preimage must include chainid AND the registry/contract address.
 - Commits: no Co-Authored-By trailer. Push after every step.
 
+## ACP facts verified live (2026-09-02 evening)
+- Wallets: broker A 0x1e8ad4f3.., broker B 0x36d32488.., provider 0x39d04d78.. (agent name "GRUDGE Research", NO offering yet).
+- Base Sepolia is UNUSABLE: Virtuals wallet proxy rejects the Sepolia ACP contract "not on the sponsored allowlist". Mainnet only.
+- Any non-ACP call from the sponsored wallet is rejected the same way (USDC transfer, ERC-8004 giveFeedback, mint).
+  => giveFeedback goes from a plain EOA: FEEDBACK_PRIVATE_KEY / FEEDBACK_ADDRESS in .env (needs a little ETH on Base).
+  => USDC must be sent to each broker wallet directly by the user.
+- DAY 1 TEST PASSED on mainnet: broker A (ungraduated) createJob -> job 75652, tx 0xdf2db6699866bcfee2d7a39ec1462e37408540b55e93f2aa70830d85f967859f. Left unfunded, expires.
+- hire.js falls back to raw createJob + requirement message when the candidate has no offering (pools/mainnet.json).
+
 ## BLOCKED ON USER (as of 2026-09-02)
 Three Virtuals ACP wallets (broker A, broker B, sandbox provider) in broker/.env. Then, in order:
 1. DAY 1 TEST: `node src/hire.js --browse research --budget 0.05` on Base Sepolia against a graduated live provider.

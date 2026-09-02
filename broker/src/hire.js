@@ -31,6 +31,7 @@ const { values: a } = parseArgs({
     browse: { type: "string" },
     feedback: { type: "boolean", default: false },
     "dry-run": { type: "boolean", default: false },
+    erc8004: { type: "boolean", default: false },
     timeout: { type: "string", default: "900" },
   },
 });
@@ -40,7 +41,15 @@ const CHAIN = chainId();
 
 async function candidatesFromPool(file) {
   const pool = JSON.parse(readFileSync(file, "utf8"));
-  return pool.candidates.map((c) => ({ ...c, address: c.address.toLowerCase() }));
+  const out = [];
+  for (const c of pool.candidates) {
+    const cand = { ...c, address: c.address.toLowerCase() };
+    if (cand.public_score == null && a.erc8004) {
+      try { cand.erc8004 = await publicScore(cand.address); cand.public_score = cand.erc8004.score; } catch { /* stays null */ }
+    }
+    out.push(cand);
+  }
+  return out;
 }
 
 async function candidatesFromBrowse(agent, keyword) {
@@ -63,6 +72,15 @@ async function candidatesFromBrowse(agent, keyword) {
 function specText(spec, stage, stages) {
   const crit = (spec?.criteria || []).map((c) => `${c.id}: ${c.type} ${JSON.stringify(c.value)}${c.pattern ? ` /${c.pattern}/` : ""}`);
   return `GRUDGE ${a.category} job${stages > 1 ? ` (stage ${stage} of ${stages})` : ""}. Deliver plain text meeting ALL of: ${crit.join("; ")}.`;
+}
+
+async function waitForSession(agent, jobId, tries = 30) {
+  for (let i = 0; i < tries; i++) {
+    const s = agent.getSession(CHAIN, jobId) || agent.getSession(CHAIN, String(jobId));
+    if (s) return s;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  throw new Error(`no session for job ${jobId}`);
 }
 
 /** Run one ACP job against `chosen`. Resolves with the outcome recorded in memory. */
@@ -141,11 +159,22 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
       }
     });
 
-    const requirement = fillRequirement(chosen.requirements, specText(spec, stage, stages));
+    const text = specText(spec, stage, stages);
     const opts = terms.require_evaluator ? { evaluatorAddress: buyer } : {};
-    log("ACP", `createJobByOfferingName chain ${CHAIN} offering "${chosen.offering}" provider ${short(chosen.address)} evaluator ${terms.require_evaluator ? "self" : "none"}`);
-    jobId = await agent.createJobByOfferingName(CHAIN, chosen.offering, chosen.address, requirement, opts);
-    log("ACP", `job ${jobId} created`);
+    if (chosen.offering) {
+      const requirement = fillRequirement(chosen.requirements, text);
+      log("ACP", `createJobByOfferingName chain ${CHAIN} offering "${chosen.offering}" provider ${short(chosen.address)} evaluator ${terms.require_evaluator ? "self" : "none"}`);
+      jobId = await agent.createJobByOfferingName(CHAIN, chosen.offering, chosen.address, requirement, opts);
+      log("ACP", `job ${jobId} created`);
+    } else {
+      // No registered offering: raw ACP job, then the requirement as the first message.
+      const sla = Number(spec?.sla_seconds || 900);
+      log("ACP", `createJob chain ${CHAIN} provider ${short(chosen.address)} evaluator ${terms.require_evaluator ? "self" : "none"} expires in ${sla}s`);
+      jobId = await agent.createJob(CHAIN, { providerAddress: chosen.address, evaluatorAddress: terms.require_evaluator ? buyer : undefined, expiredAt: Math.floor(Date.now() / 1000) + sla, description: `GRUDGE ${a.category}` });
+      log("ACP", `job ${jobId} created; sending requirement`);
+      const session = await waitForSession(agent, jobId);
+      await session.sendMessage(text, "requirement");
+    }
     await memory.inflight(Number(jobId), { stage: "created", offering: chosen.offering, provider: chosen.address, terms });
   });
 }
