@@ -1,0 +1,8 @@
+{
+  "note": "Candidate pool for local runs. public_score stands in for the ERC-8004 summary until step 5 reads it live.",
+  "candidates": [
+    { "address": "0x2222222222222222222222222222222222222222", "offering": "Deep Research Report", "public_score": 0.97, "quoted_price_usdc": 0.01 },
+    { "address": "0x1111111111111111111111111111111111111111", "offering": "Research Brief", "public_score": 0.81, "quoted_price_usdc": 0.01 },
+    { "address": "0x3333333333333333333333333333333333333333", "offering": "Quick Research", "public_score": 0.64, "quoted_price_usdc": 0.01 }
+  ]
+}

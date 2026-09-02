@@ -1,0 +1,18 @@
+{
+  "name": "grudge-broker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GRUDGE broker agent: hires Virtuals ACP providers using private Sibyl Memory as the selection, terms and price engine",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "decide": "node src/cli.js decide",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "@virtuals-protocol/acp-node-v2": "^0.1.12"
+  }
+}

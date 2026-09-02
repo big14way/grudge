@@ -32,7 +32,8 @@ Full brief lives in the first commit's conversation; key constraints repeated he
       evaluator.py (deterministic spec scoring from REFERENCE tier), keccak.py (commitment),
       server.py (stdlib HTTP, port 7411), 31 pytest passing. `pip install -e memory-service`.
       Run: `.venv/bin/python -m grudge_memory --db PATH --port 7411`
-- [ ] 2. scripts/deletion_test.sh
+- [x] 2. scripts/deletion_test.sh: 3 phases (memory up -> refuse burned; stopped -> exit 3; wiped -> re-hires burned). PASSES.
+      broker/src/memory.js is the only door to memory, no local ranking. broker/src/cli.js: decide|simulate|show|multi.
 - [ ] 3. broker A, ACP buyer path, first settled job on Base Sepolia. DAY 1 TEST: ungraduated buyer vs graduated provider.
 - [ ] 4. broker B, consortium tenant, cross-broker refusal.
 - [ ] 5. ERC-8004 read + giveFeedback on Base mainnet.
