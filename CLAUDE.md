@@ -21,6 +21,14 @@ Full brief lives in the first commit's conversation; key constraints repeated he
 - Commitment hash preimage must include chainid AND the registry/contract address.
 - Commits: no Co-Authored-By trailer. Push after every step.
 
+## BLOCKED ON USER (as of 2026-09-02)
+Three Virtuals ACP wallets (broker A, broker B, sandbox provider) in broker/.env. Then, in order:
+1. DAY 1 TEST: `node src/hire.js --browse research --budget 0.05` on Base Sepolia against a graduated live provider.
+   If create+fund fails for an ungraduated buyer, use only our sandbox provider (node src/provider.js).
+2. Register the sandbox provider on the Service Registry with offering "GRUDGE Research Brief" at 0.01 USDC.
+3. First settled job on Sepolia, then mainnet with $0.01 and --feedback for the giveFeedback tx.
+4. Record docs/DEMO.md.
+
 ## Toolchain
 - Python: `.venv` (3.12 via uv). `uv pip install --python .venv/bin/python -r memory-service/requirements.txt`
 - Node 26, npm 11.
@@ -39,10 +47,11 @@ Full brief lives in the first commit's conversation; key constraints repeated he
       broker/src/erc8004.js (publicScore read via getClients+getSummary, giveFeedback via adapter.sendCalls, owner index cached in broker/.cache).
       Dry run passes. NOT YET RUN AGAINST ACP: needs three Virtuals wallets in broker/.env (see .env.example).
       DAY 1 TEST still pending: `node src/hire.js --browse research --budget 0.05 --tenant broker-a` on Base Sepolia.
-- [ ] 4. broker B, consortium tenant, cross-broker refusal.
-- [ ] 5. ERC-8004 read + giveFeedback on Base mainnet.
-- [ ] 6. thin terminal UI.
-- [ ] README with file:line index of every memory read/write, prior work declaration, docs/DEMO.md.
+- [x] 4. scripts/consortium_test.sh: broker A (node) burned twice -> consortium signal; broker B (separate node, tenant broker-b) refuses. PASSES.
+      Live ACP version = same flow via hire.js with --tenant broker-b --agent BROKER_B.
+- [~] 5. ERC-8004 read path verified live (publicScore). giveFeedback written (erc8004.js) but NOT sent yet: needs a wallet.
+- [x] 6. thin terminal UI = broker/src/render.js (ranking table + [tag] logs). No dashboard.
+- [x] README, docs/MEMORY_INDEX.md (regenerate with scripts/memory_index.py after editing store.py; README key-site line numbers must be refreshed too), docs/PRIOR_WORK.md, docs/DEMO.md.
 
 ## Decisions locked (docs/TRUST_VECTOR.md bottom)
 alpha 0.35 / half-life 14d / TTL 30d; staged job with per-stage evaluation for demo session 1;
