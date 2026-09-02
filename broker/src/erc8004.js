@@ -83,7 +83,7 @@ export async function buildOwnerIndex(client = publicClient(), { refresh = false
   const t = Date.now();
   while (!done) {
     const batch = [];
-    for (let i = 0; i < PAR; i++) batch.push(ownersChunk(client, from + BigInt(i) * SIZE, Number(SIZE)));
+    for (let i = 0; i < PAR; i++) batch.push(ownersChunk(client, from + BigInt(i) * SIZE, SIZE));
     const results = await Promise.all(batch);
     calls += PAR;
     for (const rows of results) for (const [id, owner] of rows) owners.set(id, owner);
