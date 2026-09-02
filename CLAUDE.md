@@ -34,7 +34,11 @@ Full brief lives in the first commit's conversation; key constraints repeated he
       Run: `.venv/bin/python -m grudge_memory --db PATH --port 7411`
 - [x] 2. scripts/deletion_test.sh: 3 phases (memory up -> refuse burned; stopped -> exit 3; wiped -> re-hires burned). PASSES.
       broker/src/memory.js is the only door to memory, no local ranking. broker/src/cli.js: decide|simulate|show|multi.
-- [ ] 3. broker A, ACP buyer path, first settled job on Base Sepolia. DAY 1 TEST: ungraduated buyer vs graduated provider.
+- [~] 3. broker/src/hire.js (buyer path: decide -> createJobByOfferingName -> fund <= max_price -> evaluate -> complete/reject -> outcome),
+      broker/src/provider.js (sandbox seller, PROVIDER_MODE good|burn|overcharge), broker/src/acp.js (agent factory, tx hash tracing),
+      broker/src/erc8004.js (publicScore read via getClients+getSummary, giveFeedback via adapter.sendCalls, owner index cached in broker/.cache).
+      Dry run passes. NOT YET RUN AGAINST ACP: needs three Virtuals wallets in broker/.env (see .env.example).
+      DAY 1 TEST still pending: `node src/hire.js --browse research --budget 0.05 --tenant broker-a` on Base Sepolia.
 - [ ] 4. broker B, consortium tenant, cross-broker refusal.
 - [ ] 5. ERC-8004 read + giveFeedback on Base mainnet.
 - [ ] 6. thin terminal UI.
@@ -43,6 +47,12 @@ Full brief lives in the first commit's conversation; key constraints repeated he
 ## Decisions locked (docs/TRUST_VECTOR.md bottom)
 alpha 0.35 / half-life 14d / TTL 30d; staged job with per-stage evaluation for demo session 1;
 premium shrinks max price AND job size. Probation = refused in the failed category only.
+
+## ERC-8004 facts verified live on Base (2026-09-02)
+Identity 0x8004A169.. and Reputation 0x8004BAa1.. are ERC-1967 proxies (impl 0x7274e874.., 0x16e0fa7f..).
+getSummary REVERTS with "clientAddresses required" on an empty list -> read getClients(agentId) first.
+Values are 0..100 scale, decimals 0 (agent 1: 39 feedbacks, mean 81). getAgentWallet NOT deployed.
+~84k agents; public RPCs reject eth_getLogs over ~10k blocks, so wallet->agentId uses a multicall ownerOf index.
 
 ## HTTP API (memory-service/grudge_memory/server.py docstring)
 POST /decide {job:{category,budget_usdc}, candidates:[{address,public_score,quoted_price_usdc}]}

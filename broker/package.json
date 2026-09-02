@@ -10,9 +10,13 @@
   },
   "scripts": {
     "decide": "node src/cli.js decide",
+    "hire": "node src/hire.js",
+    "provider": "node src/provider.js",
+    "erc8004:index": "node src/erc8004.js index",
     "test": "node --test test/"
   },
   "dependencies": {
-    "@virtuals-protocol/acp-node-v2": "^0.1.12"
+    "@virtuals-protocol/acp-node-v2": "^0.1.12",
+    "viem": "^2.56.3"
   }
 }
