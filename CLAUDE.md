@@ -27,8 +27,11 @@ Full brief lives in the first commit's conversation; key constraints repeated he
 
 ## State
 - [x] Day 1: Sibyl API verified from source, smoke test passed on all planned key shapes.
-- [x] docs/TRUST_VECTOR.md proposed. AWAITING USER CONFIRMATION before writing code past it.
-- [ ] 1. memory-service: schema, promotion, decay, status transitions, decide endpoint, pytest.
+- [x] docs/TRUST_VECTOR.md CONFIRMED by user (all three open decisions, recommended options).
+- [x] 1. memory-service: trust.py (pure math), store.py (every memory read/write, [MEMORY] log),
+      evaluator.py (deterministic spec scoring from REFERENCE tier), keccak.py (commitment),
+      server.py (stdlib HTTP, port 7411), 31 pytest passing. `pip install -e memory-service`.
+      Run: `.venv/bin/python -m grudge_memory --db PATH --port 7411`
 - [ ] 2. scripts/deletion_test.sh
 - [ ] 3. broker A, ACP buyer path, first settled job on Base Sepolia. DAY 1 TEST: ungraduated buyer vs graduated provider.
 - [ ] 4. broker B, consortium tenant, cross-broker refusal.
@@ -36,7 +39,13 @@ Full brief lives in the first commit's conversation; key constraints repeated he
 - [ ] 6. thin terminal UI.
 - [ ] README with file:line index of every memory read/write, prior work declaration, docs/DEMO.md.
 
-## Open decisions (see docs/TRUST_VECTOR.md bottom)
-1. EWMA alpha / decay half-life / failure TTL values.
-2. Demo shows probation after one job but rule is 2 failures: staged job with per-stage evaluation proposed.
-3. Price premium shrinks max price AND job size, or job size only.
+## Decisions locked (docs/TRUST_VECTOR.md bottom)
+alpha 0.35 / half-life 14d / TTL 30d; staged job with per-stage evaluation for demo session 1;
+premium shrinks max price AND job size. Probation = refused in the failed category only.
+
+## HTTP API (memory-service/grudge_memory/server.py docstring)
+POST /decide {job:{category,budget_usdc}, candidates:[{address,public_score,quoted_price_usdc}]}
+POST /evaluate {category, delivery} -> {score, unmet, ...}
+POST /outcome {provider, acp_job_id, category, score, action, quoted/charged, latency_s, sla_s, tx_hash, chain_id, broker_wallet, evaluation, lesson}
+POST /inflight, GET /counterparty/<addr>, GET /consortium/<addr>, GET /journal/<addr>, POST /query/multi {query}
+Tenant via X-Grudge-Tenant header.

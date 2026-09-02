@@ -1,6 +1,6 @@
 # GRUDGE trust vector schema (v1)
 
-Status: PROPOSED, awaiting confirmation before any code is written past it.
+Status: CONFIRMED 2026-09-02. Implemented in `memory-service/grudge_memory/` (trust.py = math, store.py = every read and write).
 
 Everything below lives in the Sibyl Memory layer (`sibyl-memory-client` 0.8.0,
 verified against source, not docs). Delete the layer and none of the three
@@ -109,9 +109,14 @@ private_score = 0.40 * spec_adherence
               + 0.15 * latency
               + 0.15 * refund_behavior
               + 0.10 * price_drift
-risk_premium  = clamp((0.65 - private_score) * 1.4, 0.0, 0.5)   # 0 when score >= 0.65
-max_price     = quoted_price * (1 - risk_premium)
+risk_premium  = clamp((0.65 - private_score) * 1.4 + max_observed_price_drift, 0.0, 0.5)
+max_price     = job.budget_usdc * (1 - risk_premium)      # what we will pay THIS provider
 ```
+
+`max_observed_price_drift` comes from a cross-tier `search(<address>)` over the
+journal: if they ever charged more than they quoted, the premium remembers it.
+The same search widens the dispute window 4x when there is any failure,
+dispute or overcharge inside the failure TTL.
 
 Terms by status:
 
@@ -122,9 +127,19 @@ Terms by status:
 | probation   | 25% of base         | yes    | required  | 0            |
 | blacklisted | REFUSE              | -      | -         | -            |
 
-Ranking is by `private_score`, blacklisted removed, probation ranked below
-every trusted or unknown candidate regardless of public score. Every refusal
-returns `reason` containing the specific `acp_job_id` and `ts` from `failures`.
+Refusals, checked in this order:
+
+1. `blacklisted`: refused for everything.
+2. `probation` with a live failure in the job's category: refused, and the
+   reason names the specific `acp_job_id` and `ts`. Probation providers are
+   still hireable in other categories at probation terms.
+3. `unknown` to us but the consortium shows >= 2 live failures from other
+   brokers: refused, we will not be the next victim.
+4. `quoted_price > max_price`: refused on price.
+5. `quoted_price > max_job_usdc`: refused on size.
+
+Ranking: hires first, then by status (trusted, unknown, probation), then by
+`private_score`, then by public score as the last tie-break among strangers.
 
 Without the memory service none of `private_score`, `risk_premium`, `max_price`
 or the terms row is computable. The broker has no fallback formula; it exits.
@@ -173,14 +188,12 @@ the consortium ever holding the private detail. The preimage includes
 `chainid` and the registry address so it cannot be replayed across chains or
 deployments (the omission Clawback made).
 
-## Open questions for confirmation
+## Decisions confirmed 2026-09-02
 
-1. EWMA alpha 0.35, decay half-life 14 days, failure TTL 30 days. OK?
-2. Demo script says session 1 shows probation after ONE missed delivery, but
-   the rule is 2 failures. Proposed fix: unknown providers get STAGED terms
-   (that is the terms engine doing its job), each stage is evaluated
-   separately, and both stages miss. Two spec failures in one session,
-   probation is honest to the rule. Alternative: session 1 runs two jobs.
-3. Price model: as buyer, the premium shrinks the max price we will pay and
-   the job size we will escrow. If a fixed-price offering exceeds max_price we
-   refuse on price. OK, or should the premium only shrink job size?
+1. EWMA alpha 0.35, decay half-life 14 days, failure TTL 30 days, promote at
+   3 samples or 2 failures. Confirmed.
+2. Demo session 1 reaches probation honestly: an unknown provider gets STAGED
+   terms from the terms engine, each stage is evaluated separately, both miss.
+   Two spec failures, one job. Confirmed.
+3. The risk premium shrinks both the max price we pay and the job size we
+   escrow. A fixed-price offering above max price is refused on price. Confirmed.
