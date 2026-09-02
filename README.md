@@ -119,6 +119,7 @@ Every step below is a real transaction. Broker A is an ungraduated ACP agent.
 | first settled job: create, fund, complete (spec 5/5) | 75664 | [create 0x07ab4d…fdb2](https://basescan.org/tx/0x07ab4deb82cb8ed1e6fbeabe0bc68fb3163c20193beb411c43d16c7b2c66fdb2), [fund 0xe381fe…aecc](https://basescan.org/tx/0xe381fe035e5f49d5b4f4669a76081febdba6482a1960c8c4c131166ae5b6aecc), [complete 0x1ca55a…aed4](https://basescan.org/tx/0x1ca55aef0463de58ded230d868445a0e4e78329c59bc20f29993ebf97172aed4) |
 | giveFeedback value 100 for job 75664 | | [0xb4c29a…cfe6](https://basescan.org/tx/0xb4c29a01e3c1270a30b8b97285d0b0fd70c8ed27232f8d017f470ebf1d08cfe6) |
 | session 1, stage 1: delivery misses spec 0/5, rejected | 75666 | giveFeedback value 0 [0x3b8162…caac](https://basescan.org/tx/0x3b8162ee8898b1a21672e815c303fc30993a95fe94ffcc2c44e6ec29ebbfcaac) |
+| probation terms in another category (cap 25%, retry 0, 4x dispute window), rejected, escrow refund observed, status -> blacklisted | 75668 | giveFeedback value 25 [0x8e8c3f…0824](https://basescan.org/tx/0x8e8c3f77216452b8c31210472f81cdb23765555eedc42ca28b081cebb48a0824) |
 | session 1, stage 2: misses again, rejected, status -> probation | 75667 | giveFeedback value 0 [0xde7334…041a](https://basescan.org/tx/0xde733402bd92192bfa4a86602504dcacaa586ed46e0ca99d70dbea601b87041a) |
 
 After session 1 the memory log shows `PROMOTE journal -> entity`, then

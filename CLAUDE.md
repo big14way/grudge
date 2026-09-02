@@ -31,7 +31,8 @@ Full brief lives in the first commit's conversation; key constraints repeated he
 - hire.js falls back to raw createJob + requirement message when the candidate has no offering (pools/mainnet.json).
 
 ## Demo state
-~/.sibyl-memory/grudge.db holds the real session-1 memory (provider 0x39d04d78 on probation until ~2026-10-02).
+~/.sibyl-memory/grudge.db holds real memory: provider 0x39d04d78 is BLACKLISTED (3 live failures: jobs 75666, 75667, 75668) until ~2026-10-02.
+Refund observation verified live on job 75668 (refund_behavior -> 1.0).
 For a fresh demo run use a new --db path. broker A ~0.98 USDC, broker B 0.5 USDC, feedback EOA ~0.00015 ETH.
 BASE_RPC_URL=https://mainnet.base.org (publicnode rejects fresh receipts).
 
