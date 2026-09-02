@@ -1,0 +1,26 @@
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# node
+node_modules/
+dist/
+
+# memory databases (never commit a judge's or our own memory)
+*.db
+*.db-wal
+*.db-shm
+.sibyl-memory/
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/

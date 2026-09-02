@@ -1,0 +1,10 @@
+[project]
+name = "grudge-memory"
+version = "0.1.0"
+description = "GRUDGE memory service: sole writer of the Sibyl Memory SQLite file, HTTP on localhost"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["sibyl-memory-client==0.8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
