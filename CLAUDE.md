@@ -30,7 +30,16 @@ Full brief lives in the first commit's conversation; key constraints repeated he
 - DAY 1 TEST PASSED on mainnet: broker A (ungraduated) createJob -> job 75652, tx 0xdf2db6699866bcfee2d7a39ec1462e37408540b55e93f2aa70830d85f967859f. Left unfunded, expires.
 - hire.js falls back to raw createJob + requirement message when the candidate has no offering (pools/mainnet.json).
 
-## BLOCKED ON USER (as of 2026-09-02)
+## Demo state
+~/.sibyl-memory/grudge.db holds the real session-1 memory (provider 0x39d04d78 on probation until ~2026-10-02).
+For a fresh demo run use a new --db path. broker A ~0.98 USDC, broker B 0.5 USDC, feedback EOA ~0.00015 ETH.
+BASE_RPC_URL=https://mainnet.base.org (publicnode rejects fresh receipts).
+
+## Next
+- docs/DEMO.md recording. Optional: hire a live third-party provider via --browse for the "hire real providers where possible" line.
+- Keep README key-site line numbers in sync with store.py (scripts/memory_index.py).
+
+## Previously blocked (resolved 2026-09-02)
 Three Virtuals ACP wallets (broker A, broker B, sandbox provider) in broker/.env. Then, in order:
 1. DAY 1 TEST: `node src/hire.js --browse research --budget 0.05` on Base Sepolia against a graduated live provider.
    If create+fund fails for an ungraduated buyer, use only our sandbox provider (node src/provider.js).
@@ -51,14 +60,14 @@ Three Virtuals ACP wallets (broker A, broker B, sandbox provider) in broker/.env
       Run: `.venv/bin/python -m grudge_memory --db PATH --port 7411`
 - [x] 2. scripts/deletion_test.sh: 3 phases (memory up -> refuse burned; stopped -> exit 3; wiped -> re-hires burned). PASSES.
       broker/src/memory.js is the only door to memory, no local ranking. broker/src/cli.js: decide|simulate|show|multi.
-- [~] 3. broker/src/hire.js (buyer path: decide -> createJobByOfferingName -> fund <= max_price -> evaluate -> complete/reject -> outcome),
+- [x] 3. LIVE ON MAINNET 2026-09-02: jobs 75664/75665 settled, 75666/75667 rejected (session 1). broker/src/hire.js (buyer path: decide -> createJobByOfferingName -> fund <= max_price -> evaluate -> complete/reject -> outcome),
       broker/src/provider.js (sandbox seller, PROVIDER_MODE good|burn|overcharge), broker/src/acp.js (agent factory, tx hash tracing),
       broker/src/erc8004.js (publicScore read via getClients+getSummary, giveFeedback via adapter.sendCalls, owner index cached in broker/.cache).
       Dry run passes. NOT YET RUN AGAINST ACP: needs three Virtuals wallets in broker/.env (see .env.example).
       DAY 1 TEST still pending: `node src/hire.js --browse research --budget 0.05 --tenant broker-a` on Base Sepolia.
 - [x] 4. scripts/consortium_test.sh: broker A (node) burned twice -> consortium signal; broker B (separate node, tenant broker-b) refuses. PASSES.
       Live ACP version = same flow via hire.js with --tenant broker-b --agent BROKER_B.
-- [~] 5. ERC-8004 read path verified live (publicScore). giveFeedback written (erc8004.js) but NOT sent yet: needs a wallet.
+- [x] 5. ERC-8004: provider registered as agent 84165 (identity EOA in .env). giveFeedback sent 4x from FEEDBACK EOA. See README live table.
 - [x] 6. thin terminal UI = broker/src/render.js (ranking table + [tag] logs). No dashboard.
 - [x] README, docs/MEMORY_INDEX.md (regenerate with scripts/memory_index.py after editing store.py; README key-site line numbers must be refreshed too), docs/PRIOR_WORK.md, docs/DEMO.md.
 

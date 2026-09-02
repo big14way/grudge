@@ -88,8 +88,9 @@ Full schema and decision math: [docs/TRUST_VECTOR.md](docs/TRUST_VECTOR.md).
 
 ## Partner stacks and where
 
-**Virtuals ACP** (`@virtuals-protocol/acp-node-v2` 0.1.12, Base Sepolia 84532
-for dev, Base 8453 for the demo): `broker/src/hire.js` is the buyer path
+**Virtuals ACP** (`@virtuals-protocol/acp-node-v2` 0.1.12, Base mainnet 8453.
+Base Sepolia is not usable: the Virtuals-sponsored wallet rejects the Sepolia
+ACP contract as "not on the sponsored allowlist", verified 2026-09-02): `broker/src/hire.js` is the buyer path
 (`createJobByOfferingName` -> `budget.set` -> `session.fund()` only if the
 budget is under our private max price -> `job.submitted` -> evaluate against
 the REFERENCE spec -> `complete` / `reject` -> outcome to memory).
@@ -103,7 +104,30 @@ reverts `getSummary` on an empty client list), resolves wallet -> agentId
 through the Identity Registry `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`
 with a cached multicall index (84k agents). After each job `giveFeedback`
 publishes our evaluator score with the memory commitment as `feedbackHash`.
-Private memory in, public signal out, tx hash on the terminal.
+Private memory in, public signal out, tx hash on the terminal. The write goes
+out from the broker's own feedback key, because the sponsored ACP wallet only
+calls allowlisted ACP contracts. Our sandbox provider is ERC-8004 agent
+[84165](https://basescan.org/tx/0xbb1f082ddfb5cb7700a235e80b418d67829dd9442e6aed47cb7b1cf6423a3e2e).
+
+## Live on Base mainnet, 2026-09-02
+
+Every step below is a real transaction. Broker A is an ungraduated ACP agent.
+
+| step | ACP job | tx |
+|------|---------|----|
+| day 1 test: ungraduated buyer creates a job | 75652 | [0xdf2db6…859f](https://basescan.org/tx/0xdf2db6699866bcfee2d7a39ec1462e37408540b55e93f2aa70830d85f967859f) |
+| first settled job: create, fund, complete (spec 5/5) | 75664 | [create 0x07ab4d…fdb2](https://basescan.org/tx/0x07ab4deb82cb8ed1e6fbeabe0bc68fb3163c20193beb411c43d16c7b2c66fdb2), [fund 0xe381fe…aecc](https://basescan.org/tx/0xe381fe035e5f49d5b4f4669a76081febdba6482a1960c8c4c131166ae5b6aecc), [complete 0x1ca55a…aed4](https://basescan.org/tx/0x1ca55aef0463de58ded230d868445a0e4e78329c59bc20f29993ebf97172aed4) |
+| giveFeedback value 100 for job 75664 | | [0xb4c29a…cfe6](https://basescan.org/tx/0xb4c29a01e3c1270a30b8b97285d0b0fd70c8ed27232f8d017f470ebf1d08cfe6) |
+| session 1, stage 1: delivery misses spec 0/5, rejected | 75666 | giveFeedback value 0 [0x3b8162…caac](https://basescan.org/tx/0x3b8162ee8898b1a21672e815c303fc30993a95fe94ffcc2c44e6ec29ebbfcaac) |
+| session 1, stage 2: misses again, rejected, status -> probation | 75667 | giveFeedback value 0 [0xde7334…041a](https://basescan.org/tx/0xde733402bd92192bfa4a86602504dcacaa586ed46e0ca99d70dbea601b87041a) |
+
+After session 1 the memory log shows `PROMOTE journal -> entity`, then
+`REWRITTEN IN PLACE ... status=trusted -> probation`, then the redacted
+consortium signal. Session 2 (cold start) refuses: `burned us on job 75667 on
+2026-09-02T22:55:09Z; public score 0.97 ignored`. Broker B, a separate process
+that never met the provider, refuses on the consortium signal alone. The two
+rejected jobs refunded the buyer's escrow, which the broker now observes and
+feeds into the `refund_behavior` dimension.
 
 The commitment is `keccak256(chainId, reputationRegistry, brokerWallet,
 acpJobId, verdict)`. Chain id and registry address are in the preimage so it
@@ -132,11 +156,16 @@ cd broker && node src/cli.js decide --category research --budget 0.02          #
 ```
 
 ACP and Base need `broker/.env` (see `broker/.env.example`): three Virtuals
-wallets (broker A, broker B, sandbox provider). Then:
+wallets (broker A, broker B, sandbox provider) with a little USDC on Base, and
+a feedback key with a little ETH on Base. Then:
 
 ```
-node src/provider.js --mode burn                       # terminal 2
-node src/hire.js --browse "GRUDGE Research Brief" --budget 0.02 --feedback   # terminal 3
+cd broker
+node src/wallet.js whoami                                                        # auth + balances
+node src/provider.js --mode burn                                                 # terminal 2
+node src/hire.js --pool pools/mainnet.json --budget 0.02 --feedback              # session 1: burned twice
+node src/hire.js --pool pools/mainnet.json --budget 0.02                         # session 2: refuses, names the job
+GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --pool pools/mainnet.json --budget 0.02   # broker B refuses
 ```
 
 Demo script: [docs/DEMO.md](docs/DEMO.md).

@@ -17,7 +17,8 @@ import { AssetToken } from "@virtuals-protocol/acp-node-v2";
 import { loadEnv } from "./env.js";
 import { Memory, requireMemory } from "./memory.js";
 import { chainId, createAgent, fillRequirement } from "./acp.js";
-import { publicScore, giveFeedback, resolveAgentId } from "./erc8004.js";
+import { erc20Abi } from "viem";
+import { publicClient, publicScore, giveFeedback, resolveAgentId } from "./erc8004.js";
 import { log, renderDecision, short } from "./render.js";
 
 loadEnv();
@@ -74,6 +75,21 @@ function specText(spec, stage, stages) {
   return `GRUDGE ${a.category} job${stages > 1 ? ` (stage ${stage} of ${stages})` : ""}. Deliver plain text meeting ALL of: ${crit.join("; ")}.`;
 }
 
+const USDC = { 8453: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" }[CHAIN];
+async function usdcBalance(address) {
+  const raw = await publicClient().readContract({ address: USDC, abi: erc20Abi, functionName: "balanceOf", args: [address] });
+  return Number(raw) / 1e6;
+}
+
+/** ACP stores reasons as bytes32; short strings are readable, long ones are hashes. */
+function decodeReason(r) {
+  if (typeof r !== "string" || !r.startsWith("0x")) return r;
+  try {
+    const txt = Buffer.from(r.slice(2), "hex").toString("utf8").replace(/\0+$/g, "");
+    return /^[\x20-\x7e]+$/.test(txt) ? txt : r.slice(0, 18) + "..";
+  } catch { return r; }
+}
+
 async function waitForSession(agent, jobId, tries = 30) {
   for (let i = 0; i < tries; i++) {
     const s = agent.getSession(CHAIN, jobId) || agent.getSession(CHAIN, String(jobId));
@@ -91,6 +107,7 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
     let funded = null;
     let deliverable = null;
     let evaluation = null;
+    let balanceBeforeFund = null;
     let done = false;
     const timer = setTimeout(() => { if (!done) { done = true; reject(new Error(`job ${jobId} timed out after ${a.timeout}s`)); } }, Number(a.timeout) * 1000);
 
@@ -104,7 +121,7 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
         provider: chosen.address, acp_job_id: Number(jobId), category: a.category, score, action,
         reason: extra.reason || evaluation?.notes || action,
         quoted_price_usdc: chosen.quoted_price_usdc, charged_price_usdc: funded ?? chosen.quoted_price_usdc,
-        latency_s: latency, sla_s: spec?.sla_seconds, tx_hash: extra.tx_hash, chain_id: CHAIN,
+        latency_s: latency, sla_s: spec?.sla_seconds, tx_hash: extra.tx_hash, chain_id: CHAIN, refunded: extra.refunded ?? null,
         broker_wallet: buyer, public_score: chosen.erc8004 || (chosen.public_score != null ? { score: chosen.public_score } : null),
         evaluation, lesson: extra.lesson,
       });
@@ -117,7 +134,7 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
       try {
         if (entry.kind === "system") {
           const ev = entry.event;
-          log("ACP", `job ${jobId} ${ev.type}${ev.amount != null ? ` amount ${ev.amount}` : ""}${ev.reason ? ` "${ev.reason}"` : ""}`);
+          log("ACP", `job ${jobId} ${ev.type}${ev.amount != null ? ` amount ${ev.amount}` : ""}${ev.reason ? ` "${decodeReason(ev.reason)}"` : ""}`);
           switch (ev.type) {
             case "budget.set": {
               const amount = Number(ev.amount);
@@ -127,6 +144,7 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
                 return;
               }
               await memory.inflight(Number(jobId), { stage: "budget.set", amount, max_price_usdc: chosen.max_price_usdc, terms });
+              balanceBeforeFund = await usdcBalance(buyer).catch(() => null);
               await session.fund(AssetToken.usdc(amount, session.chainId));
               funded = amount;
               break;
@@ -142,11 +160,22 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
               break;
             }
             case "job.completed":
-              await finish(evaluation && evaluation.score < 0.5 ? "released-despite-fail" : "released");
+              await finish(evaluation && evaluation.score < 0.5 ? "released-despite-fail" : "released", { reason: decodeReason(ev.reason) });
               break;
-            case "job.rejected":
-              await finish("disputed", { reason: `rejected: ${ev.reason}`, lesson: "tighten terms, provider missed spec" });
+            case "job.rejected": {
+              // Did the escrow come back? Observed, not assumed: compare the buyer's USDC balance.
+              let refunded = null;
+              if (balanceBeforeFund !== null) {
+                for (let i = 0; i < 6 && refunded !== true; i++) {
+                  const now = await usdcBalance(buyer).catch(() => null);
+                  if (now !== null && now >= balanceBeforeFund - 1e-9) refunded = true;
+                  else { refunded = false; await new Promise((r) => setTimeout(r, 5000)); }
+                }
+                log("GRUDGE", `refund check: ${refunded ? "escrow returned in full" : "escrow NOT returned"} (before ${balanceBeforeFund}, now ${await usdcBalance(buyer).catch(() => "?")})`);
+              }
+              await finish("disputed", { reason: `spec unmet: ${(evaluation?.unmet || []).join(", ") || decodeReason(ev.reason)}`, refunded, lesson: "tighten terms, provider missed spec" });
               break;
+            }
             case "job.expired":
               await finish("expired", { reason: "job expired before delivery", lesson: "provider did not deliver inside SLA" });
               break;

@@ -8,6 +8,8 @@ Before recording:
 .venv/bin/python -m grudge_memory --db ~/.sibyl-memory/grudge-demo.db      # left pane, fresh DB
 cd broker && node src/provider.js --mode burn                                # sandbox provider, separate terminal
 ```
+Rehearsed live on Base mainnet 2026-09-02 (jobs 75664 to 75667). Each session
+costs 0.01 USDC per stage; rejected stages refund.
 
 ## 0:00 Problem
 Public reputation is one number everyone shares and games. ERC-8004 gives
@@ -17,7 +19,7 @@ none of them you.
 
 ## 0:30 Session 1: GRUDGE hires the top public score and gets burned
 ```
-node src/hire.js --tenant broker-a --category research --budget 0.02 --browse "GRUDGE Research Brief"
+node src/hire.js --tenant broker-a --category research --budget 0.02 --pool pools/mainnet.json --feedback
 ```
 - The ranking table: all candidates `unknown`, the sandbox provider has the
   highest public score, terms engine gives STAGED (2x), evaluator required,
@@ -34,7 +36,7 @@ Ctrl-C the broker pane. Show the empty terminal. The memory service stays up.
 
 ## 1:45 Session 2: cold start, same pool, GRUDGE refuses and names the job
 ```
-node src/hire.js --tenant broker-a --category research --budget 0.02 --browse "GRUDGE Research Brief"
+node src/hire.js --tenant broker-a --category research --budget 0.02 --pool pools/mainnet.json --feedback
 ```
 - Same candidates. The sandbox provider now shows `probation`, verdict
   REFUSE, reason `burned us on job <id> on <date>; public score X ignored`.
@@ -51,7 +53,7 @@ Then restart the demo memory service (the test used its own DB).
 
 ## 3:00 Broker B, separate process, never met the provider
 ```
-GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --category research --budget 0.02 --browse "GRUDGE Research Brief"
+GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --category research --budget 0.02 --pool pools/mainnet.json
 ```
 - `broker-b` private view: unknown. Consortium: 2 live failures reported by
   broker-a. Verdict REFUSE, reason starts with `consortium:`.
@@ -61,7 +63,9 @@ GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --category research --b
 - ACP Create Job and Fund tx hashes from session 1 (printed by `[CHAIN]`).
 - `giveFeedback` tx on Base mainnet from `--feedback`: value = evaluator
   score, tag1 `grudge`, tag2 `research`, feedbackHash = the memory
-  commitment (chainid + registry bound).
+  commitment (chainid + registry bound). Provider is ERC-8004 agent 84165;
+  `node src/erc8004.js score 0x39d04d783e7d0a969c1c585ad26c3a5faaafee6f`
+  shows the public number moving after our feedback.
 
 ## Fallbacks
 - If a live provider stalls, the sandbox provider is the critical path.
