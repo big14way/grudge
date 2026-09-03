@@ -20,11 +20,15 @@ Routes (JSON in, JSON out). Tenant comes from the X-Grudge-Tenant header or a
   GET  /spec/<category>     PUT /spec/<category>
   GET  /state/<key>         PUT /state/<key>
   POST /query/multi     {query}
+  GET  /ui              thin live viewer (reads bypass the memory op counters)
+  GET  /snapshot        viewer data
+  GET  /log?after=N     [MEMORY] log lines after sequence N
 """
 from __future__ import annotations
 
 import json
 import traceback
+from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -81,6 +85,10 @@ def make_handler(store: MemoryStore):
                 return {"ok": True, "service": "grudge-memory", "db": store.db_path}
             if m == "GET" and p == ["stats"]:
                 return store.stats()
+            if m == "GET" and p == ["snapshot"]:
+                return store.snapshot()
+            if m == "GET" and p == ["log"]:
+                return {"lines": store.log_after(int(qs.get("after", 0)))}
             if m == "POST" and p == ["decide"]:
                 return store.decide(tenant, body["job"], body["candidates"])
             if m == "POST" and p == ["evaluate"]:
@@ -118,6 +126,14 @@ def make_handler(store: MemoryStore):
             return None
 
         def do_GET(self) -> None:
+            if urlparse(self.path).path in ("/ui", "/ui/"):
+                data = (Path(__file__).parent / "ui.html").read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
             self._route("GET")
 
         def do_POST(self) -> None:

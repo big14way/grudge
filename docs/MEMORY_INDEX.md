@@ -4,35 +4,39 @@ All Sibyl Memory access lives in one file: `memory-service/grudge_memory/store.p
 
 | line | function | tier | op | call |
 |-----:|----------|------|----|------|
-| [123](memory-service/grudge_memory/store.py#L123) | `seed_references` | REFERENCE | read | `if c.get_reference(key) is None:` |
-| [124](memory-service/grudge_memory/store.py#L124) | `seed_references` | REFERENCE | write | `c.set_reference(key, spec, metadata={"schema_version": C.SCHEMA_VERSION})` |
-| [132](memory-service/grudge_memory/store.py#L132) | `get_spec` | REFERENCE | read | `ref = c.get_reference(f"spec:{category}")` |
-| [142](memory-service/grudge_memory/store.py#L142) | `set_spec` | REFERENCE | write | `c.set_reference(f"spec:{category}", spec, metadata={"schema_version": C.SCHEMA_VERSION})` |
-| [148](memory-service/grudge_memory/store.py#L148) | `set_state` | HOT | write | `self._use(tenant).set_state(key, body)` |
-| [153](memory-service/grudge_memory/store.py#L153) | `get_state` | HOT | read | `doc = self._use(tenant).get_state(key)` |
-| [160](memory-service/grudge_memory/store.py#L160) | `_clear_negotiation` | HOT | read | `if c.get_state(key) is not None:` |
-| [161](memory-service/grudge_memory/store.py#L161) | `_clear_negotiation` | HOT | write | `c.set_state(key, {"closed": True, "closed_at": T.iso(self._now())})` |
-| [163](memory-service/grudge_memory/store.py#L163) | `_clear_negotiation` | HOT | read | `inflight = c.get_state("inflight")` |
-| [165](memory-service/grudge_memory/store.py#L165) | `_clear_negotiation` | HOT | write | `c.set_state("inflight", {"jobs": jobs})` |
-| [171](memory-service/grudge_memory/store.py#L171) | `mark_inflight` | HOT | write | `c.set_state(f"negotiation:{job_id}", negotiation)` |
-| [172](memory-service/grudge_memory/store.py#L172) | `mark_inflight` | HOT | read | `inflight = c.get_state("inflight")` |
-| [176](memory-service/grudge_memory/store.py#L176) | `mark_inflight` | HOT | write | `c.set_state("inflight", {"jobs": jobs})` |
-| [189](memory-service/grudge_memory/store.py#L189) | `journal_for` | SEARCH cross-tier | read | `hits = self._use(tenant).search(address, tiers=("journal",), limit=limit)` |
-| [203](memory-service/grudge_memory/store.py#L203) | `recent_events` | COLD | read | `ev = self._use(tenant).read_events(limit=limit)` |
-| [220](memory-service/grudge_memory/store.py#L220) | `get_counterparty` | WARM | read | `row = c.get_entity(C.CATEGORY_COUNTERPARTY, address)` |
-| [231](memory-service/grudge_memory/store.py#L231) | `get_counterparty` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
-| [242](memory-service/grudge_memory/store.py#L242) | `list_counterparties` | WARM | read | `rows = self._use(tenant).list_entities(C.CATEGORY_COUNTERPARTY, status=status)` |
-| [253](memory-service/grudge_memory/store.py#L253) | `consortium_signal` | WARM | read | `row = c.get_entity(C.CATEGORY_SIGNAL, address)` |
-| [271](memory-service/grudge_memory/store.py#L271) | `_write_consortium_signal` | WARM | read | `sig = c.get_entity(C.CATEGORY_SIGNAL, address)["body"]` |
-| [286](memory-service/grudge_memory/store.py#L286) | `_write_consortium_signal` | WARM | write | `c.set_entity(C.CATEGORY_SIGNAL, address, sig, status=sig_status)` |
-| [325](memory-service/grudge_memory/store.py#L325) | `record_outcome` | COLD | write | `event_id = c.write_event(` |
-| [346](memory-service/grudge_memory/store.py#L346) | `record_outcome` | WARM | read | `row = c.get_entity(C.CATEGORY_COUNTERPARTY, address)` |
-| [351](memory-service/grudge_memory/store.py#L351) | `record_outcome` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
-| [364](memory-service/grudge_memory/store.py#L364) | `record_outcome` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
-| [439](memory-service/grudge_memory/store.py#L439) | `decide` | SEARCH cross-tier | read | `hits = self._use(tenant).search(address, limit=50)` |
-| [508](memory-service/grudge_memory/store.py#L508) | `multi_query` | SEARCH multi-record | read | `hits = multi_record_search(self._use(tenant), query, limit=limit, diagnostics=diag)` |
+| [129](memory-service/grudge_memory/store.py#L129) | `seed_references` | REFERENCE | read | `if c.get_reference(key) is None:` |
+| [130](memory-service/grudge_memory/store.py#L130) | `seed_references` | REFERENCE | write | `c.set_reference(key, spec, metadata={"schema_version": C.SCHEMA_VERSION})` |
+| [138](memory-service/grudge_memory/store.py#L138) | `get_spec` | REFERENCE | read | `ref = c.get_reference(f"spec:{category}")` |
+| [148](memory-service/grudge_memory/store.py#L148) | `set_spec` | REFERENCE | write | `c.set_reference(f"spec:{category}", spec, metadata={"schema_version": C.SCHEMA_VERSION})` |
+| [154](memory-service/grudge_memory/store.py#L154) | `set_state` | HOT | write | `self._use(tenant).set_state(key, body)` |
+| [159](memory-service/grudge_memory/store.py#L159) | `get_state` | HOT | read | `doc = self._use(tenant).get_state(key)` |
+| [166](memory-service/grudge_memory/store.py#L166) | `_clear_negotiation` | HOT | read | `if c.get_state(key) is not None:` |
+| [167](memory-service/grudge_memory/store.py#L167) | `_clear_negotiation` | HOT | write | `c.set_state(key, {"closed": True, "closed_at": T.iso(self._now())})` |
+| [169](memory-service/grudge_memory/store.py#L169) | `_clear_negotiation` | HOT | read | `inflight = c.get_state("inflight")` |
+| [171](memory-service/grudge_memory/store.py#L171) | `_clear_negotiation` | HOT | write | `c.set_state("inflight", {"jobs": jobs})` |
+| [177](memory-service/grudge_memory/store.py#L177) | `mark_inflight` | HOT | write | `c.set_state(f"negotiation:{job_id}", negotiation)` |
+| [178](memory-service/grudge_memory/store.py#L178) | `mark_inflight` | HOT | read | `inflight = c.get_state("inflight")` |
+| [182](memory-service/grudge_memory/store.py#L182) | `mark_inflight` | HOT | write | `c.set_state("inflight", {"jobs": jobs})` |
+| [195](memory-service/grudge_memory/store.py#L195) | `journal_for` | SEARCH cross-tier | read | `hits = self._use(tenant).search(address, tiers=("journal",), limit=limit)` |
+| [209](memory-service/grudge_memory/store.py#L209) | `recent_events` | COLD | read | `ev = self._use(tenant).read_events(limit=limit)` |
+| [226](memory-service/grudge_memory/store.py#L226) | `get_counterparty` | WARM | read | `row = c.get_entity(C.CATEGORY_COUNTERPARTY, address)` |
+| [237](memory-service/grudge_memory/store.py#L237) | `get_counterparty` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
+| [248](memory-service/grudge_memory/store.py#L248) | `list_counterparties` | WARM | read | `rows = self._use(tenant).list_entities(C.CATEGORY_COUNTERPARTY, status=status)` |
+| [259](memory-service/grudge_memory/store.py#L259) | `consortium_signal` | WARM | read | `row = c.get_entity(C.CATEGORY_SIGNAL, address)` |
+| [277](memory-service/grudge_memory/store.py#L277) | `_write_consortium_signal` | WARM | read | `sig = c.get_entity(C.CATEGORY_SIGNAL, address)["body"]` |
+| [292](memory-service/grudge_memory/store.py#L292) | `_write_consortium_signal` | WARM | write | `c.set_entity(C.CATEGORY_SIGNAL, address, sig, status=sig_status)` |
+| [331](memory-service/grudge_memory/store.py#L331) | `record_outcome` | COLD | write | `event_id = c.write_event(` |
+| [352](memory-service/grudge_memory/store.py#L352) | `record_outcome` | WARM | read | `row = c.get_entity(C.CATEGORY_COUNTERPARTY, address)` |
+| [357](memory-service/grudge_memory/store.py#L357) | `record_outcome` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
+| [370](memory-service/grudge_memory/store.py#L370) | `record_outcome` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
+| [445](memory-service/grudge_memory/store.py#L445) | `decide` | SEARCH cross-tier | read | `hits = self._use(tenant).search(address, limit=50)` |
+| [513](memory-service/grudge_memory/store.py#L513) | `snapshot` | WARM | read | `for r in c.list_entities(C.CATEGORY_COUNTERPARTY, limit=50):` |
+| [521](memory-service/grudge_memory/store.py#L521) | `snapshot` | HOT | read | `inflight = c.get_state("inflight")` |
+| [522](memory-service/grudge_memory/store.py#L522) | `snapshot` | COLD | read | `out["tenants"][tenant] = {"counterparties": rows, "events": c.read_events(limit=events),` |
+| [526](memory-service/grudge_memory/store.py#L526) | `snapshot` | WARM | read | `for r in c.list_entities(C.CATEGORY_SIGNAL, limit=50):` |
+| [552](memory-service/grudge_memory/store.py#L552) | `multi_query` | SEARCH multi-record | read | `hits = multi_record_search(self._use(tenant), query, limit=limit, diagnostics=diag)` |
 
-27 call sites. Brokers reach them only through HTTP (`broker/src/memory.js`).
+31 call sites. Brokers reach them only through HTTP (`broker/src/memory.js`).
 
 ## Broker side (HTTP client, no local fallback)
 

@@ -69,7 +69,8 @@ Three Virtuals ACP wallets (broker A, broker B, sandbox provider) in broker/.env
 - [x] 4. scripts/consortium_test.sh: broker A (node) burned twice -> consortium signal; broker B (separate node, tenant broker-b) refuses. PASSES.
       Live ACP version = same flow via hire.js with --tenant broker-b --agent BROKER_B.
 - [x] 5. ERC-8004: provider registered as agent 84165 (identity EOA in .env). giveFeedback sent 4x from FEEDBACK EOA. See README live table.
-- [x] 6. thin terminal UI = broker/src/render.js (ranking table + [tag] logs). No dashboard.
+- [x] 6. thin UI: broker/src/render.js (terminal) + memory-service/grudge_memory/ui.html served at /ui by the memory service
+      (GET /snapshot, GET /log?after=N; viewer reads bypass _mem so they never count or trigger decay). Screenshot verified via headless Brave.
 - [x] README (problem lives IN the README, no separate problem doc), docs/MEMORY_INDEX.md (regenerate with scripts/memory_index.py after editing store.py; README key-site line numbers must be refreshed too), docs/DEMO.md.
 - NO prior-work declaration anywhere (removed by user 2026-09-03). Do not cite any other project in the repo.
 

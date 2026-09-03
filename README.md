@@ -243,6 +243,8 @@ node src/hire.js --pool pools/mainnet.json --budget 0.02                     # s
 GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --pool pools/mainnet.json --budget 0.02
 ```
 
+While the service runs, `http://127.0.0.1:7411/ui` serves a read-only viewer of the trust vectors, consortium signals, HOT state, journal and the live `[MEMORY]` log. It is served by the memory service itself, its reads bypass the memory operation counters, and it goes dark with a "MEMORY LAYER GONE" banner the moment the service stops.
+
 Demo script with timings: [docs/DEMO.md](docs/DEMO.md).
 
 ## 10. Repository layout
@@ -254,7 +256,8 @@ memory-service/
     trust.py        EWMA, decay, status, private score, premium, terms (pure functions)
     evaluator.py    deterministic spec scoring from the REFERENCE tier
     keccak.py       commitment hashing, zero dependencies
-    server.py       stdlib HTTP on localhost
+    server.py       stdlib HTTP on localhost, serves /ui
+    ui.html         thin live viewer, vanilla JS, no dependencies
   tests/            31 pytest cases
 broker/
   src/memory.js     the only door to memory, no local fallback

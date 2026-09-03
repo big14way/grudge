@@ -25,6 +25,7 @@ def api(store):
         except urllib.error.HTTPError as e:
             return e.code, json.loads(e.read())
 
+    call.port = port
     yield call
     httpd.shutdown()
 
@@ -58,3 +59,18 @@ def test_bad_request(api):
     assert s == 400
     s, r = api("GET", "/nope")
     assert s == 404
+
+
+def test_viewer_is_quiet(api, store):
+    for i in range(2):
+        api("POST", "/outcome", outcome(BURN, 50 + i, 0.2))
+    reads_before, writes_before = store.reads, store.writes
+    s, snap = api("GET", "/snapshot")
+    assert s == 200 and snap["tenants"]["broker-a"]["counterparties"][0]["status"] == "probation"
+    assert snap["consortium"][0]["live_failures"] == 2
+    s, log = api("GET", "/log?after=0")
+    assert log["lines"] and any("PROMOTE" in l["line"] for l in log["lines"])
+    assert (store.reads, store.writes) == (reads_before, writes_before)   # viewer never counts as memory traffic
+    import urllib.request
+    html = urllib.request.urlopen(f"http://127.0.0.1:{api.port}/ui").read().decode()
+    assert "MEMORY LAYER GONE" in html

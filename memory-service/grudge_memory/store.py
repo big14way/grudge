@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+from collections import deque
 from datetime import datetime
 from typing import Any, Callable
 
@@ -90,6 +91,8 @@ class MemoryStore:
         self._log = log or (lambda s: print(s, flush=True))
         self.reads = 0
         self.writes = 0
+        self.log_lines: deque[tuple[int, str]] = deque(maxlen=500)   # ring buffer for the viewer
+        self._log_seq = 0
 
     # ------------------------------------------------------------------ util
     def _mem(self, kind: str, msg: str) -> None:
@@ -97,7 +100,10 @@ class MemoryStore:
             self.reads += 1
         elif kind == "write":
             self.writes += 1
-        self._log(f"[MEMORY] {kind:<7} {msg}")
+        line = f"[MEMORY] {kind:<7} {msg}"
+        self._log_seq += 1
+        self.log_lines.append((self._log_seq, f"{T.iso(self._now())} {line}"))
+        self._log(line)
 
     def _use(self, tenant: str) -> MemoryClient:
         if self._client.get_tenant() != tenant:
@@ -491,6 +497,44 @@ class MemoryStore:
                              if chosen else "no acceptable provider")
                           + f"; refused {sum(1 for r in ranked if r['verdict'] == 'refuse')}/{len(ranked)}")
         return {"job": job, "ranked": ranked, "chosen": chosen, "decided_at": T.iso(now)}
+
+    # --------------------------------------------------------------- viewer
+    def snapshot(self, *, events: int = 15) -> dict[str, Any]:
+        """Read-only view for the terminal viewer. Bypasses _mem on purpose:
+        the viewer must not count as memory traffic, must not trigger
+        decay rewrites, and must not appear in the [MEMORY] log."""
+        now = self._now()
+        out: dict[str, Any] = {"now": T.iso(now), "db": self._db_path, "reads": self.reads, "writes": self.writes,
+                               "tier": self._client.get_tier(), "account": self.account, "tenants": {}}
+        with self._lock:
+            for tenant in ("broker-a", "broker-b"):
+                c = self._use(tenant)
+                rows = []
+                for r in c.list_entities(C.CATEGORY_COUNTERPARTY, limit=50):
+                    v = r["body"]
+                    live = T.live_failures(v, now)
+                    rows.append({"address": r["name"], "status": r["status"], "trust": v.get("trust"),
+                                 "competence": v.get("per_category_competence"), "samples": v.get("sample_count"),
+                                 "live_failures": len(live), "last_failure": live[-1] if live else None,
+                                 "last_seen": v.get("last_seen"), "public": v.get("public_score_at_last_job"),
+                                 "updated_at": r["updated_at"]})
+                inflight = c.get_state("inflight")
+                out["tenants"][tenant] = {"counterparties": rows, "events": c.read_events(limit=events),
+                                          "inflight": (inflight or {}).get("body", {}).get("jobs", [])}
+            c = self._use(C.TENANT_CONSORTIUM)
+            sigs = []
+            for r in c.list_entities(C.CATEGORY_SIGNAL, limit=50):
+                b = r["body"]
+                live = [f for f in b.get("failure_ts", []) if (now - T.parse_iso(f)).total_seconds() / 86400.0 <= C.FAILURE_TTL_DAYS]
+                sigs.append({"address": r["name"], "status": r["status"], "live_failures": len(live),
+                             "categories_failed": b.get("categories_failed"), "reporters": b.get("reporters"),
+                             "last_failure_ts": b.get("last_failure_ts"), "commitments": len(b.get("commitments", []))})
+            out["consortium"] = sigs
+            out["free_tier"] = self._client.free_tier_status()
+        return out
+
+    def log_after(self, seq: int) -> list[dict[str, Any]]:
+        return [{"seq": n, "line": l} for n, l in self.log_lines if n > seq]
 
     # --------------------------------------------------------- multi record
     def multi_query(self, tenant: str, query: str, *, limit: int = 10) -> dict[str, Any]:

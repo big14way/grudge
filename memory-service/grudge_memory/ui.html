@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GRUDGE memory</title>
+<style>
+  :root { --bg:#0b0e11; --panel:#12161b; --line:#1f262e; --fg:#d7dde3; --dim:#7d8894; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --acc:#58a6ff; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:13px/1.45 var(--mono); }
+  header { display:flex; gap:24px; align-items:baseline; padding:10px 16px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:2; }
+  header h1 { font-size:15px; margin:0; letter-spacing:.12em; }
+  header .kv { color:var(--dim); } header .kv b { color:var(--fg); font-weight:600; }
+  main { display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding:12px 16px; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px 12px; min-height:80px; overflow:auto; }
+  section h2 { margin:0 0 8px; font-size:12px; color:var(--dim); font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+  table { width:100%; border-collapse:collapse; } th, td { text-align:left; padding:3px 6px; border-bottom:1px solid var(--line); vertical-align:top; white-space:nowrap; }
+  th { color:var(--dim); font-weight:500; }
+  .status { padding:1px 6px; border-radius:3px; font-weight:600; }
+  .trusted { background:#123d1f; color:var(--ok); } .probation { background:#3d2e0c; color:var(--warn); } .blacklisted { background:#4a1414; color:var(--bad); } .watch { background:#1c2a3a; color:var(--acc); }
+  .bar { display:inline-block; width:56px; height:7px; background:#1f262e; border-radius:2px; vertical-align:middle; margin-right:4px; } .bar i { display:block; height:100%; border-radius:2px; background:var(--acc); }
+  .log { grid-column: 1 / -1; max-height:38vh; }
+  .log pre { margin:0; white-space:pre-wrap; word-break:break-all; }
+  .log .write { color:var(--warn); } .log .read { color:var(--dim); } .log .hot { color:var(--fg); font-weight:600; }
+  .muted { color:var(--dim); } .small { font-size:11px; }
+  #dead { display:none; position:fixed; inset:0; background:rgba(11,14,17,.94); z-index:9; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
+  #dead h1 { color:var(--bad); font-size:34px; letter-spacing:.2em; margin:0; } #dead p { color:var(--dim); margin:0; }
+  body.dead #dead { display:flex; }
+</style>
+</head>
+<body>
+<header>
+  <h1>GRUDGE · MEMORY</h1>
+  <span class="kv">db <b id="db">–</b></span>
+  <span class="kv">tier <b id="tier">–</b></span>
+  <span class="kv">account <b id="account">–</b></span>
+  <span class="kv">reads <b id="reads">0</b> · writes <b id="writes">0</b></span>
+  <span class="kv">cap used <b id="cap">–</b></span>
+  <span class="kv" id="clock">–</span>
+</header>
+<main>
+  <section><h2>broker-a · counterparties (WARM)</h2><div id="cp-a"></div><div class="small muted" id="inflight-a"></div></section>
+  <section><h2>broker-b · counterparties (WARM)</h2><div id="cp-b"></div><div class="small muted" id="inflight-b"></div></section>
+  <section><h2>consortium · redacted signals</h2><div id="consortium"></div></section>
+  <section><h2>journal (COLD) · latest events, broker-a</h2><div id="events"></div></section>
+  <section class="log"><h2>[MEMORY] log · every read and write</h2><pre id="log"></pre></section>
+</main>
+<div id="dead"><h1>MEMORY LAYER GONE</h1><p>The memory service is not answering. The broker cannot rank, price or set terms.</p></div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const short = (a) => a ? a.slice(0, 6) + '…' + a.slice(-4) : '–';
+  const pct = (x) => x == null ? '–' : Math.round(x * 100) + '%';
+  const bar = (x) => `<span class="bar"><i style="width:${Math.round((x ?? 0) * 100)}%"></i></span>${(x ?? 0).toFixed(2)}`;
+  const st = (s) => `<span class="status ${s || 'watch'}">${s || 'unknown'}</span>`;
+  const esc = (s) => String(s ?? '').replace(/[&<>]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  let logSeq = 0, logLines = [];
+
+  function cpTable(rows) {
+    if (!rows.length) return '<div class="muted">no warm entities yet (new counterparties live in the journal until 3 samples or 2 failures)</div>';
+    return `<table><tr><th>provider</th><th>status</th><th>spec</th><th>latency</th><th>refund</th><th>price</th><th>competence</th><th>n</th><th>live fails</th><th>last failure</th></tr>` +
+      rows.map(r => `<tr><td title="${r.address}">${short(r.address)}</td><td>${st(r.status)}</td>
+        <td>${bar(r.trust?.spec_adherence)}</td><td>${bar(r.trust?.latency)}</td><td>${bar(r.trust?.refund_behavior)}</td><td>${bar(r.trust?.price_drift)}</td>
+        <td class="small">${Object.entries(r.competence || {}).map(([k, v]) => `${k} ${v.toFixed(2)}`).join(' · ') || '–'}</td>
+        <td>${r.samples}</td><td>${r.live_failures}</td>
+        <td class="small">${r.last_failure ? `job ${r.last_failure.acp_job_id} · ${r.last_failure.ts} · ${esc(r.last_failure.reason)}` : '–'}</td></tr>`).join('') + '</table>';
+  }
+  function sigTable(rows) {
+    if (!rows.length) return '<div class="muted">no signals</div>';
+    return `<table><tr><th>provider</th><th>status</th><th>live fails</th><th>categories</th><th>reporters</th><th>last</th><th>commitments</th></tr>` +
+      rows.map(r => `<tr><td title="${r.address}">${short(r.address)}</td><td>${st(r.status)}</td><td>${r.live_failures}</td><td>${(r.categories_failed || []).join(', ') || '–'}</td><td>${(r.reporters || []).join(', ')}</td><td class="small">${r.last_failure_ts || '–'}</td><td>${r.commitments}</td></tr>`).join('') + '</table>';
+  }
+  function evTable(rows) {
+    if (!rows.length) return '<div class="muted">no events</div>';
+    return `<table><tr><th>ts</th><th>job</th><th>provider</th><th>acted</th><th>evaluated</th><th>forward</th></tr>` +
+      rows.map(e => `<tr><td class="small">${e.ts}</td><td>${e.extra?.acp_job_id ?? '–'}</td><td>${short(e.extra?.provider)}</td>
+        <td>${esc(e.acted?.action)}</td><td>${e.evaluated?.score ?? '–'} <span class="small muted">${esc(e.evaluated?.notes || '')}</span></td>
+        <td class="small">${esc(e.forward?.lesson || '')}</td></tr>`).join('') + '</table>';
+  }
+  function render(s) {
+    $('db').textContent = s.db; $('tier').textContent = s.tier; $('account').textContent = s.account ? s.account.slice(0, 8) + '…' : 'not activated';
+    $('reads').textContent = s.reads; $('writes').textContent = s.writes; $('cap').textContent = pct(s.free_tier?.pct_used); $('clock').textContent = s.now;
+    for (const [t, id] of [['broker-a', 'a'], ['broker-b', 'b']]) {
+      const d = s.tenants[t]; $('cp-' + id).innerHTML = cpTable(d.counterparties);
+      $('inflight-' + id).textContent = 'HOT inflight: ' + (d.inflight.length ? d.inflight.join(', ') : 'none');
+    }
+    $('consortium').innerHTML = sigTable(s.consortium);
+    $('events').innerHTML = evTable(s.tenants['broker-a'].events);
+  }
+  function renderLog() {
+    $('log').innerHTML = logLines.slice(-120).map(l => {
+      const cls = / write /.test(l) ? 'write' : 'read';
+      const hot = /PROMOTE|REWRITTEN|DECIDE|blacklisted|probation|consortium signal/.test(l) ? ' hot' : '';
+      return `<span class="${cls}${hot}">${esc(l)}</span>`;
+    }).join('\n');
+    const el = $('log'); el.parentElement.scrollTop = el.parentElement.scrollHeight;
+  }
+  async function tick() {
+    try {
+      const [snap, log] = await Promise.all([fetch('/snapshot').then(r => r.json()), fetch('/log?after=' + logSeq).then(r => r.json())]);
+      document.body.classList.remove('dead');
+      render(snap);
+      for (const l of log.lines) { logSeq = l.seq; logLines.push(l.line); }
+      if (logLines.length > 400) logLines = logLines.slice(-400);
+      renderLog();
+    } catch (e) {
+      document.body.classList.add('dead');
+    }
+  }
+  tick(); setInterval(tick, 1500);
+</script>
+</body>
+</html>

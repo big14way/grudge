@@ -1,7 +1,9 @@
 # GRUDGE demo script (2 to 5 minutes, one unedited take, clock on screen)
 
-Terminal layout: left = memory service (`[MEMORY]` log), right = broker.
-Keep a clock visible (`watch -n1 date` in a third pane or the OS clock).
+Screen layout: left = memory service (`[MEMORY]` log), right = broker,
+and a browser window on `http://127.0.0.1:7411/ui` (the memory viewer: trust
+vectors, consortium signals, journal, live log). Keep a clock visible; the
+viewer's header shows the service clock too.
 
 Before recording:
 ```
@@ -49,7 +51,8 @@ scripts/deletion_test.sh
 ```
 Three phases on screen: memory up (refuses), memory stopped (exit 3, cannot
 rank, price or set terms), memory wiped (hires the burned provider again).
-Then restart the demo memory service (the test used its own DB).
+For the camera, also Ctrl-C the demo memory service once: the viewer flips
+to "MEMORY LAYER GONE" within two seconds. Restart it afterwards.
 
 ## 3:00 Broker B, separate process, never met the provider
 ```
