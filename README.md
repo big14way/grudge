@@ -280,14 +280,14 @@ All Sibyl access lives in `memory-service/grudge_memory/store.py`. [docs/MEMORY_
 
 | what | function | line |
 |------|----------|------|
-| hire decision, all three outputs | `decide` | [379](memory-service/grudge_memory/store.py#L379) |
-| warm rewrite in place after a job | `record_outcome` | [331](memory-service/grudge_memory/store.py#L331) |
-| promotion journal → entity | `record_outcome` | [345](memory-service/grudge_memory/store.py#L345) |
-| decay and status on read, written back | `get_counterparty` | [187](memory-service/grudge_memory/store.py#L187) |
-| per-provider journal via FTS, verified | `journal_for` | [159](memory-service/grudge_memory/store.py#L159) |
-| cross-tier `search()` for dispute window and price drift | `decide` | [418](memory-service/grudge_memory/store.py#L418) |
-| redacted consortium signal | `_write_consortium_signal` | [245](memory-service/grudge_memory/store.py#L245) |
-| three-stage multi-record query | `multi_query` | [475](memory-service/grudge_memory/store.py#L475) |
+| hire decision, all three outputs | `decide` | [400](memory-service/grudge_memory/store.py#L400) |
+| warm rewrite in place after a job | `record_outcome` | [352](memory-service/grudge_memory/store.py#L352) |
+| promotion journal → entity | `record_outcome` | [366](memory-service/grudge_memory/store.py#L366) |
+| decay and status on read, written back | `get_counterparty` | [208](memory-service/grudge_memory/store.py#L208) |
+| per-provider journal via FTS, verified | `journal_for` | [180](memory-service/grudge_memory/store.py#L180) |
+| cross-tier `search()` for dispute window and price drift | `decide` | [439](memory-service/grudge_memory/store.py#L439) |
+| redacted consortium signal | `_write_consortium_signal` | [266](memory-service/grudge_memory/store.py#L266) |
+| three-stage multi-record query | `multi_query` | [496](memory-service/grudge_memory/store.py#L496) |
 
 ---
 
