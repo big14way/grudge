@@ -1,221 +1,294 @@
 # GRUDGE
 
-**Agents hire other agents on public reputation. Public reputation is one
-number, everyone sees the same one, and the provider that burned you yesterday
-still ranks first for you today.** GRUDGE is a buyer agent for Virtuals ACP
-whose own private memory of every counterparty decides who it hires, on what
-terms, and at what price. Delete the memory and it cannot decide at all.
+**A buyer agent for Virtuals ACP that hires on its own private memory of every counterparty, not on the public score.**
 
-## The problem, concretely
+Sibyl Labs hackathon, September 2026. Base mainnet. MIT.
 
-Agent-to-agent commerce is live. Virtuals ACP has hundreds of provider
-offerings priced from $0.01, and buyer agents pick providers automatically by
-success rate and rating. ERC-8004 puts an agent reputation registry on Base.
-Both give a buyer the same input: one aggregate score per provider.
+---
 
-That input fails a buyer in four ways, and we hit every one of them while
-building this:
+## Contents
 
-1. **It is not yours.** The score is an average of other buyers' feedback
-   about other jobs. Your own outcome with that provider changes it by one
-   vote among hundreds. In our run the provider that missed our spec three
-   times in a row still carried its public score into the next session.
-2. **It is farmable.** Feedback costs one cheap job. Our own sandbox provider
-   went from no ERC-8004 history to a public score of 100 in two jobs, written
-   by a wallet we control. The registry cannot tell a real customer from a
-   sock puppet; ERC-8004's authors say so themselves and make `getSummary`
-   refuse to answer without a list of whose feedback to trust. The registry
-   refuses to be a universal scalar. Buyers use it as one anyway.
-3. **It is one dimension.** A provider can deliver on spec and overcharge, or
-   deliver fast and fight refunds, or be excellent at research and useless at
-   writing. One number hides all of that.
-4. **Agents forget.** A buyer agent restarts from zero each session. Even the
-   experience it did have is gone, so it rehires the same provider at the
-   same flat terms and loses the same money again. At $0.01 a job nobody
-   notices. At scale, an autonomous buyer bleeds on repeat failures with no
-   human in the loop.
+1. [The problem](#1-the-problem)
+2. [What GRUDGE does](#2-what-grudge-does)
+3. [Architecture](#3-architecture)
+4. [Memory design](#4-memory-design)
+5. [The decision engine](#5-the-decision-engine)
+6. [Partner integrations](#6-partner-integrations)
+7. [Live results on Base](#7-live-results-on-base)
+8. [The deletion test](#8-the-deletion-test)
+9. [Getting started](#9-getting-started)
+10. [Repository layout](#10-repository-layout)
+11. [Where memory is read and written](#11-where-memory-is-read-and-written)
 
-## What GRUDGE does about it
+---
 
-GRUDGE keeps the missing half: a **private, per-counterparty trust vector**
-in Sibyl Memory, four dimensions plus per-category competence, learned only
-from jobs it ran itself, decayed over time, and trusted over the public
-number. From that memory it computes three things before every hire:
+## 1. The problem
 
-| decision | from | without memory |
-|----------|------|----------------|
-| WHO to hire | private trust vector, live failures, consortium signal | not computable, broker exits 3 |
-| WHAT TERMS | status -> job size cap, staged or single, evaluator required, retry budget, dispute window | not computable |
-| WHAT PRICE | private risk premium from spec adherence, latency, refunds, observed price drift | not computable |
+Agent-to-agent commerce is live. On Virtuals ACP a buyer agent browses provider agents, funds an escrow, receives a deliverable and releases payment without a human. Offerings start at $0.01 and providers are ranked by success rate. ERC-8004 adds an onchain reputation registry for agents on Base with tens of thousands of registered identities.
 
-A burned provider with the highest public score is passed over, and the
-refusal names the specific ACP job id and date. A second broker that never met
-the provider refuses too, through a redacted consortium signal, so the
-cold-start problem is solved without sharing private data. And because the
-buyer's judgement is published back to ERC-8004 after every job, the public
-number slowly gets one honest vote it did not have before.
+Every buyer agent makes its hiring decision from the same input: the provider's public aggregate score. That input fails a buyer in four ways, and each one was reproduced while building this project.
 
-**Delete the memory layer and GRUDGE cannot rank, price or set terms. It
-exits.** That is the architecture, not a degradation. `scripts/deletion_test.sh`
-proves it in three phases. Longer version: [docs/PROBLEM.md](docs/PROBLEM.md).
+| failure | what it means for a buyer | what we observed |
+|---------|---------------------------|------------------|
+| **The score is everyone's, so it is nobody's** | Your own outcome with a provider moves its score by one vote among hundreds | Our test provider missed the acceptance spec three times in a row; its public standing for every other buyer was unchanged |
+| **The score is farmable** | Feedback costs one cheap job; a sock puppet is indistinguishable from a customer | We took a fresh provider to a public score of 100 in two $0.01 jobs from a wallet we control. The ERC-8004 authors know this: the deployed `getSummary` reverts unless you name whose feedback to trust |
+| **The score is one dimension** | "Great at research, bad at writing, overcharges, fights refunds" collapses into a single number | Four independent behaviours had to be tracked separately before terms could be set sensibly |
+| **The buyer forgets** | Agents restart stateless. Even a bad experience is gone next session, so the same provider is rehired at flat terms | Session 2 of a memoryless broker rehires the provider that burned it in session 1 |
 
-Built from scratch for the Sibyl Labs hackathon, September 2026. MIT.
+At $0.01 a job no alarm fires. At scale an autonomous buyer bleeds on repeat failures with no human in the loop.
 
-## Find every memory read and write in under two minutes
+## 2. What GRUDGE does
 
-All Sibyl access is in one file, `memory-service/grudge_memory/store.py`.
-[docs/MEMORY_INDEX.md](docs/MEMORY_INDEX.md) lists every call with a line
-link (generated by `scripts/memory_index.py`). The service prints a `[MEMORY]`
-line for each one.
+GRUDGE keeps the missing half of reputation: a **private, per-counterparty trust vector** learned only from jobs it ran itself, stored in Sibyl Memory, decayed over time, and trusted over the public number. Before every hire it computes three things from that memory:
 
-Key sites (line numbers as of this commit, the index is authoritative):
+| decision | computed from |
+|----------|---------------|
+| **Who** to hire | private score per candidate, live failures in this job category, redacted consortium signal from peer brokers |
+| **What terms** | status maps to job size cap, staged or single job, evaluator required or waived, retry budget, dispute window |
+| **What price** | risk premium from spec adherence, latency, refund behaviour and observed price drift, applied to the budget |
 
-- warm rewrite in place after a job: `record_outcome` -> `set_entity` ([store.py#L329](memory-service/grudge_memory/store.py#L329))
-- promotion journal -> entity: `record_outcome` ([store.py#L345](memory-service/grudge_memory/store.py#L345))
-- decay and status re-derived on read, written back: `get_counterparty` ([store.py#L187](memory-service/grudge_memory/store.py#L187))
-- per-provider journal via FTS with verification: `journal_for` ([store.py#L159](memory-service/grudge_memory/store.py#L159))
-- cross-tier `search()` for dispute window and price drift: `decide` ([store.py#L418](memory-service/grudge_memory/store.py#L418))
-- redacted consortium signal: `_write_consortium_signal` ([store.py#L245](memory-service/grudge_memory/store.py#L245))
-- three-stage multi-record query: `multi_query` ([store.py#L475](memory-service/grudge_memory/store.py#L475))
+Consequences a buyer can see:
 
-## Memory design (Sibyl Memory, free tier, one SQLite file)
+- A provider with the highest public score is passed over if it burned this buyer, and the refusal names the ACP job id and date.
+- A second broker that never met the provider refuses it too, through a redacted signal shared in a consortium tenant. Cold start is solved without sharing private data.
+- After every job the buyer's evaluator score is published back to ERC-8004 with a chain-bound commitment, so the public number gains one honest, verifiable vote.
 
-Topology: one Python process is the sole writer of the SQLite file and serves
-HTTP on localhost. Node brokers are clients. Sibyl's storage targets concurrent
-reads with a single writer (WAL, `busy_timeout` 5000 ms, `BEGIN IMMEDIATE`), so
-multi-process writing is never attempted. Both brokers and the consortium path
-serialize through one lock in one process.
+None of the three decisions has a fallback formula. Stop the memory service and the broker exits. Wipe the database and the broker hires the provider that burned it. Section 8 performs both.
 
-Tenants on one DB: `broker-a`, `broker-b`, `consortium`.
+## 3. Architecture
 
-| tier | what GRUDGE keeps there |
-|------|-------------------------|
-| WARM entities, `category="counterparty"`, `name=<wallet>` | the trust vector, rewritten in place, `status` trusted / probation / blacklisted |
-| COLD journal, one event per job | `evaluated` = our judgement vs the spec, `acted` = hired / refused / disputed / released and why, `forward` = the lesson for next time, `extra` = job id, provider, price, latency, tx hash |
-| HOT state | `negotiation:<jobid>` and `inflight` only |
-| REFERENCE | `spec:<category>` acceptance criteria, so the same spec is judged the same way every session |
-| tenant `consortium`, `category="signal"` | redacted cross-broker signal: status, failure timestamps, categories, reporters, commitments. No prices, no job ids, no spec text |
+One Python process owns the SQLite file and serves HTTP on localhost. The Node brokers are clients of it and hold no ranking, pricing or terms logic of their own.
 
-Deliberate choices:
+```mermaid
+flowchart LR
+    subgraph memory["Memory service (Python, single process, sole writer)"]
+        direction TB
+        store["store.py<br/>every Sibyl read / write"]
+        sib["sibyl-memory-client 0.8.0"]
+        db[("SQLite, WAL<br/>tenants: broker-a, broker-b, consortium")]
+        store --> sib --> db
+    end
 
-- **Rewrite, never append.** `UNIQUE (tenant_id, category, name)` is enforced
-  at the schema level. One row per counterparty, updated in place after every
-  job. There is exactly one trust vector per provider, never a pile of stale ones.
-- **The four journal kwargs are mapped on purpose** (`evaluated` / `acted` /
-  `forward` / `extra`). Reading an event tells you what we judged, what we did,
-  what we learned, and the hard facts, in that order.
-- **`status` kwarg for blacklisting, never `archive_entity`.** The client has
-  no restore path from the archive. Archive is reserved for a wallet confirmed
-  abandoned or compromised, always with a reason.
-- **Dynamic storage.** A new counterparty lives in the journal only until 3
-  samples or 2 failures, then is promoted to a warm entity. Failures expire
-  after 30 days and trust decays toward a neutral prior with a 14-day
-  half-life, both applied on read and written back, so a blacklisted provider
-  can return to probation and then to trusted.
-- **Dispute-window and price decisions use `search()` not `search_entities()`**
-  because the evidence spans the journal and entity tiers.
-- **`multi_record_search`** answers "which providers that failed a research job
-  also overcharged" in two Sibyl stages plus one exact stage, with the trace
-  logged.
-- **No `learn()` / `learner()` / `lint()`.** Paid tier, would raise
-  `TierGateError` on free.
+    A["Broker A<br/>(Node, tenant broker-a)"]
+    B["Broker B<br/>(Node, tenant broker-b)"]
+    P["Sandbox provider<br/>(Node, ACP seller)"]
 
-Full schema and decision math: [docs/TRUST_VECTOR.md](docs/TRUST_VECTOR.md).
+    A -- "decide / evaluate / outcome" --> store
+    B -- "decide / evaluate / outcome" --> store
 
-## Partner stacks and where
+    subgraph base["Base mainnet"]
+        ACP["Virtuals ACP<br/>escrow + job state machine"]
+        REP["ERC-8004 Reputation Registry<br/>0x8004BAa1..."]
+        ID["ERC-8004 Identity Registry<br/>0x8004A169..."]
+    end
 
-**Virtuals ACP** (`@virtuals-protocol/acp-node-v2` 0.1.12, Base mainnet 8453.
-Base Sepolia is not usable: the Virtuals-sponsored wallet rejects the Sepolia
-ACP contract as "not on the sponsored allowlist", verified 2026-09-02): `broker/src/hire.js` is the buyer path
-(`createJobByOfferingName` -> `budget.set` -> `session.fund()` only if the
-budget is under our private max price -> `job.submitted` -> evaluate against
-the REFERENCE spec -> `complete` / `reject` -> outcome to memory).
-`broker/src/provider.js` is our own sandbox provider with a burn mode so no
-live provider is on the critical path. `broker/src/acp.js` traces every tx hash.
+    A -- "createJob, fund, complete / reject" --> ACP
+    B -- "createJob, fund, complete / reject" --> ACP
+    P -- "setBudget, submit" --> ACP
+    A -- "giveFeedback(agentId, score, commitment)" --> REP
+    A -. "getClients + getSummary (public score)" .-> REP
+    REP --- ID
+```
 
-**Base / ERC-8004** (`broker/src/erc8004.js`): reads the public score from the
-Reputation Registry `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63` via
-`getClients` then `getSummary` (verified live: the deployed implementation
-reverts `getSummary` on an empty client list), resolves wallet -> agentId
-through the Identity Registry `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`
-with a cached multicall index (84k agents). After each job `giveFeedback`
-publishes our evaluator score with the memory commitment as `feedbackHash`.
-Private memory in, public signal out, tx hash on the terminal. The write goes
-out from the broker's own feedback key, because the sponsored ACP wallet only
-calls allowlisted ACP contracts. Our sandbox provider is ERC-8004 agent
-[84165](https://basescan.org/tx/0xbb1f082ddfb5cb7700a235e80b418d67829dd9442e6aed47cb7b1cf6423a3e2e).
+Why a single writer: Sibyl's storage targets concurrent reads with one writer (WAL, `busy_timeout` 5000 ms, `BEGIN IMMEDIATE`). Multi-process writes would hit `SQLITE_BUSY`. Both brokers and the consortium path serialize through one lock in one process, so there is no contention by construction.
 
-## Live on Base mainnet, 2026-09-02
+### One hire, end to end
 
-Every step below is a real transaction. Broker A is an ungraduated ACP agent.
+```mermaid
+sequenceDiagram
+    participant Br as Broker A
+    participant M as Memory service
+    participant ACP as Virtuals ACP
+    participant Pr as Provider
+    participant R as ERC-8004
 
-| step | ACP job | tx |
-|------|---------|----|
-| day 1 test: ungraduated buyer creates a job | 75652 | [0xdf2db6…859f](https://basescan.org/tx/0xdf2db6699866bcfee2d7a39ec1462e37408540b55e93f2aa70830d85f967859f) |
-| first settled job: create, fund, complete (spec 5/5) | 75664 | [create 0x07ab4d…fdb2](https://basescan.org/tx/0x07ab4deb82cb8ed1e6fbeabe0bc68fb3163c20193beb411c43d16c7b2c66fdb2), [fund 0xe381fe…aecc](https://basescan.org/tx/0xe381fe035e5f49d5b4f4669a76081febdba6482a1960c8c4c131166ae5b6aecc), [complete 0x1ca55a…aed4](https://basescan.org/tx/0x1ca55aef0463de58ded230d868445a0e4e78329c59bc20f29993ebf97172aed4) |
-| giveFeedback value 100 for job 75664 | | [0xb4c29a…cfe6](https://basescan.org/tx/0xb4c29a01e3c1270a30b8b97285d0b0fd70c8ed27232f8d017f470ebf1d08cfe6) |
-| session 1, stage 1: delivery misses spec 0/5, rejected | 75666 | giveFeedback value 0 [0x3b8162…caac](https://basescan.org/tx/0x3b8162ee8898b1a21672e815c303fc30993a95fe94ffcc2c44e6ec29ebbfcaac) |
-| probation terms in another category (cap 25%, retry 0, 4x dispute window), rejected, escrow refund observed, status -> blacklisted | 75668 | giveFeedback value 25 [0x8e8c3f…0824](https://basescan.org/tx/0x8e8c3f77216452b8c31210472f81cdb23765555eedc42ca28b081cebb48a0824) |
-| session 1, stage 2: misses again, rejected, status -> probation | 75667 | giveFeedback value 0 [0xde7334…041a](https://basescan.org/tx/0xde733402bd92192bfa4a86602504dcacaa586ed46e0ca99d70dbea601b87041a) |
+    Br->>M: POST /decide {job, candidates}
+    M->>M: warm read + decay + status, journal search, consortium read, cross-tier search
+    M-->>Br: ranking, terms, max price, chosen provider
+    Br->>ACP: createJob (evaluator = self if terms require it)
+    Pr->>ACP: setBudget 0.01 USDC
+    ACP-->>Br: budget.set
+    Br->>M: POST /inflight (HOT state)
+    Br->>ACP: fund, only if budget <= max price
+    Pr->>ACP: submit deliverable
+    ACP-->>Br: job.submitted
+    Br->>M: POST /evaluate {category, deliverable}
+    M->>M: REFERENCE spec:category -> score
+    M-->>Br: score, unmet criteria
+    Br->>ACP: complete or reject
+    ACP-->>Br: job.completed / job.rejected (escrow refund observed)
+    Br->>M: POST /outcome
+    M->>M: journal event, warm rewrite or promotion, consortium signal, HOT state cleared
+    M-->>Br: status, commitment hash
+    Br->>R: giveFeedback(agentId, score, feedbackHash = commitment)
+```
 
-After session 1 the memory log shows `PROMOTE journal -> entity`, then
-`REWRITTEN IN PLACE ... status=trusted -> probation`, then the redacted
-consortium signal. Session 2 (cold start) refuses: `burned us on job 75667 on
-2026-09-02T22:55:09Z; public score 0.97 ignored`. Broker B, a separate process
-that never met the provider, refuses on the consortium signal alone. The two
-rejected jobs refunded the buyer's escrow, which the broker now observes and
-feeds into the `refund_behavior` dimension.
+## 4. Memory design
 
-The commitment is `keccak256(chainId, reputationRegistry, brokerWallet,
-acpJobId, verdict)`. Chain id and registry address are in the preimage so it
-cannot be replayed across chains or deployments.
+One SQLite file, three tenants, all four Sibyl tiers in use.
 
-## How memory made this possible
+| tier | key | contents |
+|------|-----|----------|
+| WARM entities | `category="counterparty"`, `name=<provider wallet>` | the trust vector, rewritten in place; `status` is `trusted`, `probation` or `blacklisted` |
+| COLD journal | one event per job | `evaluated` = our judgement against the spec, `acted` = hired / refused / disputed / released and why, `forward` = the lesson for next time, `extra` = job id, provider, prices, latency, tx hash, tags |
+| HOT state | `negotiation:<jobid>`, `inflight` | live memo position and open escrows only |
+| REFERENCE | `spec:<category>` | acceptance criteria and SLA, so the same spec is judged identically every session |
+| WARM, tenant `consortium` | `category="signal"`, `name=<provider wallet>` | redacted cross-broker signal: status, failure timestamps, categories, reporters, commitments. No prices, job ids or spec text |
 
-Without memory a broker has one input, the public score, and one policy, hire
-the top score at flat terms. That is the failure GRUDGE exists to fix, and it
-is exactly what phase 3 of the deletion test shows: wipe the DB and GRUDGE
-hires the provider that burned it, at stranger terms. The refusal, the tighter
-terms and the risk premium exist only because the outcome of a specific past
-job was remembered, decayed, and read back.
+Trust vector body:
 
-## Run
+```jsonc
+{
+  "trust": { "spec_adherence": 0.36, "latency": 1.0, "refund_behavior": 1.0, "price_drift": 1.0 },
+  "per_category_competence": { "research": 0.28, "writing": 0.25 },
+  "sample_count": 5,
+  "failures": [ { "acp_job_id": 75668, "ts": "2026-09-02T22:59:26Z", "category": "writing", "reason": "spec unmet: length, title, cta" } ],
+  "last_seen": "...", "decayed_at": "...", "public_score_at_last_job": { "score": 0.97 },
+  "promoted_at": "...", "promoted_from": "journal"
+}
+```
+
+Design choices, each deliberate:
+
+- **Rewrite, never append.** `UNIQUE (tenant_id, category, name)` is enforced at the schema level. One row per counterparty, updated after every job.
+- **Journal kwargs mapped on purpose.** Reading an event tells you what was judged, what was done, what was learned, and the facts, in that order.
+- **`status` for blacklisting, never `archive_entity`.** The client has no restore from the archive. Archive is reserved for a wallet confirmed abandoned, always with a reason.
+- **Dynamic tiers.** A new counterparty lives in the journal only until 3 samples or 2 failures, then is promoted to a warm entity. Failures expire after 30 days and trust decays toward a neutral prior with a 14-day half-life. Both are applied on read and written back, so a blacklisted provider returns to probation and then to trusted without any manual reset.
+- **Cross-tier `search()`** for the dispute window and price drift, because that evidence spans journal and entity tiers. `search_entities()` is reserved for entity-only lookups.
+- **`multi_record_search`** answers "which providers that failed a research job also overcharged" in two Sibyl stages plus one exact stage, with the trace logged.
+- **No `learn()`, `learner()` or `lint()`.** Paid tier; they raise `TierGateError` on free.
+
+Every operation prints a `[MEMORY]` line so the tiers can be watched moving during the demo. Full schema and constants: [docs/TRUST_VECTOR.md](docs/TRUST_VECTOR.md).
+
+## 5. The decision engine
 
 ```
-uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -e memory-service
-.venv/bin/python -m pytest memory-service            # 31 tests
+private_score = 0.40·spec_adherence + 0.20·competence[category] + 0.15·latency + 0.15·refund_behavior + 0.10·price_drift
+risk_premium  = clamp((0.65 − private_score)·1.4 + max_observed_price_drift, 0, 0.5)
+max_price     = budget · (1 − risk_premium)
+```
+
+| status | job size cap | staged | evaluator | retries | outcome |
+|--------|--------------|--------|-----------|---------|---------|
+| trusted | base · (0.5 + score) | if score < 0.80 | if score < 0.85 | 2 | hire |
+| unknown | 10 % of base | yes, 2 stages | required | 1 | hire on probe terms |
+| probation | 25 % of base | yes, 2 stages | required | 0 | refused in the failed category, hire elsewhere |
+| blacklisted | 0 | — | — | 0 | refused |
+
+Refusal order: blacklisted; probation with a live failure in this category; consortium shows two or more live failures from peers; quoted price above max price; quoted price above the size cap. Any refusal carries the specific job id and timestamp from the failure record.
+
+## 6. Partner integrations
+
+**Virtuals ACP** — `@virtuals-protocol/acp-node-v2` 0.1.12 on Base mainnet. `broker/src/hire.js` is the buyer path: memory decides, `createJob` or `createJobByOfferingName`, fund only when the set budget is under the private max price, evaluate the deliverable against the REFERENCE spec, `complete` or `reject`, record the outcome. `broker/src/provider.js` is a sandbox seller with `good`, `burn` and `overcharge` modes so no third-party provider sits on the critical path. Gas is sponsored; only USDC moves. Base Sepolia is not usable with Virtuals-managed wallets: the sponsor rejects the Sepolia ACP contract as not on its allowlist.
+
+**Base / ERC-8004** — `broker/src/erc8004.js`. Reads the public score from the Reputation Registry via `getClients` then `getSummary` (the deployed implementation reverts on an empty client list). Resolves wallet to agent id through the Identity Registry using a cached multicall index of all 84k agents, since public RPCs reject wide log scans. After every job `giveFeedback` publishes the evaluator score with the memory commitment as `feedbackHash`. The write is signed by the broker's own feedback key, because the sponsored ACP wallet only calls allowlisted contracts.
+
+The commitment is `keccak256(encodePacked(uint256 chainId, address reputationRegistry, address brokerWallet, uint256 acpJobId, string verdict))`. Chain id and registry address are in the preimage so the same report cannot be replayed on another chain or deployment.
+
+## 7. Live results on Base
+
+All transactions below are on Base mainnet (chain 8453), 2 September 2026. Broker A is an ungraduated ACP agent. The sandbox provider is ERC-8004 agent [84165](https://basescan.org/tx/0xbb1f082ddfb5cb7700a235e80b418d67829dd9442e6aed47cb7b1cf6423a3e2e).
+
+| step | ACP job | transactions |
+|------|---------|--------------|
+| Ungraduated buyer creates a job | 75652 | [create](https://basescan.org/tx/0xdf2db6699866bcfee2d7a39ec1462e37408540b55e93f2aa70830d85f967859f) |
+| Settled job, spec 5/5 | 75664 | [create](https://basescan.org/tx/0x07ab4deb82cb8ed1e6fbeabe0bc68fb3163c20193beb411c43d16c7b2c66fdb2) · [fund](https://basescan.org/tx/0xe381fe035e5f49d5b4f4669a76081febdba6482a1960c8c4c131166ae5b6aecc) · [complete](https://basescan.org/tx/0x1ca55aef0463de58ded230d868445a0e4e78329c59bc20f29993ebf97172aed4) · [giveFeedback 100](https://basescan.org/tx/0xb4c29a01e3c1270a30b8b97285d0b0fd70c8ed27232f8d017f470ebf1d08cfe6) |
+| Settled job, spec 5/5 | 75665 | [giveFeedback 100](https://basescan.org/tx/0x31a493f08511e7ca6e7ff42c9be5cdb05f4eca2f7c8d840260968dda237fd124) |
+| Session 1, stage 1: spec 0/5, rejected | 75666 | [giveFeedback 0](https://basescan.org/tx/0x3b8162ee8898b1a21672e815c303fc30993a95fe94ffcc2c44e6ec29ebbfcaac) |
+| Session 1, stage 2: spec 0/5, rejected, status → probation | 75667 | [giveFeedback 0](https://basescan.org/tx/0xde733402bd92192bfa4a86602504dcacaa586ed46e0ca99d70dbea601b87041a) |
+| Probation terms in another category, rejected, refund observed, status → blacklisted | 75668 | [giveFeedback 25](https://basescan.org/tx/0x8e8c3f77216452b8c31210472f81cdb23765555eedc42ca28b081cebb48a0824) |
+
+After session 1 the memory log shows `PROMOTE journal -> entity`, then `REWRITTEN IN PLACE ... status=trusted -> probation`, then the redacted consortium signal. Session 2, started cold, refuses with `burned us on job 75667 on 2026-09-02T22:55:09Z; public score 0.97 ignored`. Broker B, a separate process that never met the provider, refuses on the consortium signal alone.
+
+## 8. The deletion test
+
+`scripts/deletion_test.sh` runs three phases against a temporary database:
+
+| phase | memory layer | broker behaviour |
+|-------|--------------|------------------|
+| 1 | up | refuses the provider that burned it, names the job |
+| 2 | service stopped | cannot rank, price or set terms; exits with code 3 |
+| 3 | database wiped, service restarted | hires the burned provider again, at stranger terms |
+
+Phase 2 proves the architecture fails without memory. Phase 3 proves the refusal in phase 1 came from memory and nothing else. `scripts/consortium_test.sh` runs the cross-broker refusal with two real Node processes.
+
+## 9. Getting started
+
+Requirements: Python 3.10+, Node 20+, `uv`.
+
+```bash
+# memory service
+uv venv --python 3.12 .venv
+uv pip install --python .venv/bin/python -e memory-service
+.venv/bin/python -m pytest memory-service                # 31 tests
+
+# broker
 cd broker && npm install && npm test && cd ..
 
-.venv/bin/python -m grudge_memory --db ~/.sibyl-memory/grudge.db --port 7411   # terminal 1
-scripts/deletion_test.sh                                                       # the gate, 3 phases
-scripts/consortium_test.sh                                                     # two brokers, two processes
-cd broker && node src/cli.js decide --category research --budget 0.02          # ranking without ACP
+# run
+.venv/bin/python -m grudge_memory --db ~/.sibyl-memory/grudge.db --port 7411
+scripts/deletion_test.sh
+scripts/consortium_test.sh
+cd broker && node src/cli.js decide --category research --budget 0.02
 ```
 
-ACP and Base need `broker/.env` (see `broker/.env.example`): three Virtuals
-wallets (broker A, broker B, sandbox provider) with a little USDC on Base, and
-a feedback key with a little ETH on Base. Then:
+For ACP and Base, copy `broker/.env.example` to `broker/.env` and fill in three Virtuals agent wallets (broker A, broker B, sandbox provider) plus a feedback key. Fund the brokers with a little USDC on Base and the feedback key with a little ETH on Base. Then:
 
-```
+```bash
 cd broker
-node src/wallet.js whoami                                                        # auth + balances
-node src/provider.js --mode burn                                                 # terminal 2
-node src/hire.js --pool pools/mainnet.json --budget 0.02 --feedback              # session 1: burned twice
-node src/hire.js --pool pools/mainnet.json --budget 0.02                         # session 2: refuses, names the job
-GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --pool pools/mainnet.json --budget 0.02   # broker B refuses
+node src/wallet.js whoami                                                    # authenticate, show balances
+node src/provider.js --mode burn                                             # terminal 2
+node src/hire.js --pool pools/mainnet.json --budget 0.02 --feedback          # session 1
+node src/hire.js --pool pools/mainnet.json --budget 0.02                     # session 2: refuses
+GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --pool pools/mainnet.json --budget 0.02
 ```
 
-Demo script: [docs/DEMO.md](docs/DEMO.md).
+Demo script with timings: [docs/DEMO.md](docs/DEMO.md).
 
-## Layout
+## 10. Repository layout
 
 ```
-memory-service/   Python. Sole writer of the SQLite file. HTTP on localhost. 31 pytest.
-broker/           Node. Memory client with no fallback, ACP buyer, sandbox provider, ERC-8004.
-scripts/          deletion_test.sh, consortium_test.sh, memory_index.py
-docs/             PROBLEM.md, TRUST_VECTOR.md, MEMORY_INDEX.md, DEMO.md
+memory-service/
+  grudge_memory/
+    store.py        every Sibyl read and write, [MEMORY] log
+    trust.py        EWMA, decay, status, private score, premium, terms (pure functions)
+    evaluator.py    deterministic spec scoring from the REFERENCE tier
+    keccak.py       commitment hashing, zero dependencies
+    server.py       stdlib HTTP on localhost
+  tests/            31 pytest cases
+broker/
+  src/memory.js     the only door to memory, no local fallback
+  src/hire.js       ACP buyer path
+  src/provider.js   sandbox seller
+  src/erc8004.js    public score read, giveFeedback, identity index
+  src/acp.js        agent factory, tx hash tracing
+  src/cli.js        decide | simulate | show | multi
+  pools/            candidate pools
+scripts/
+  deletion_test.sh  the gate
+  consortium_test.sh
+  memory_index.py   generates docs/MEMORY_INDEX.md
+docs/
+  TRUST_VECTOR.md   schema and constants
+  MEMORY_INDEX.md   every memory call with a line link
+  DEMO.md           demo script
 ```
 
-## License
+## 11. Where memory is read and written
 
-MIT. See [LICENSE](LICENSE).
+All Sibyl access lives in `memory-service/grudge_memory/store.py`. [docs/MEMORY_INDEX.md](docs/MEMORY_INDEX.md) lists every call with a line link; the key sites:
+
+| what | function | line |
+|------|----------|------|
+| hire decision, all three outputs | `decide` | [379](memory-service/grudge_memory/store.py#L379) |
+| warm rewrite in place after a job | `record_outcome` | [331](memory-service/grudge_memory/store.py#L331) |
+| promotion journal → entity | `record_outcome` | [345](memory-service/grudge_memory/store.py#L345) |
+| decay and status on read, written back | `get_counterparty` | [187](memory-service/grudge_memory/store.py#L187) |
+| per-provider journal via FTS, verified | `journal_for` | [159](memory-service/grudge_memory/store.py#L159) |
+| cross-tier `search()` for dispute window and price drift | `decide` | [418](memory-service/grudge_memory/store.py#L418) |
+| redacted consortium signal | `_write_consortium_signal` | [245](memory-service/grudge_memory/store.py#L245) |
+| three-stage multi-record query | `multi_query` | [475](memory-service/grudge_memory/store.py#L475) |
+
+---
+
+MIT License. See [LICENSE](LICENSE).
