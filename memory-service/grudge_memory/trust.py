@@ -80,8 +80,13 @@ def price_drift_obs(quoted: float | None, charged: float | None) -> float | None
     return 1.0 - clamp((charged - quoted) / quoted)
 
 
+NO_SHOW_ACTIONS = ("disputed", "expired", "unresponsive")
+
+
 def is_failure(score: float | None, action: str | None) -> bool:
-    if action == "disputed":
+    """A failure is a rejected delivery, a job that expired undelivered, or a
+    provider that never responded inside the SLA. Silence counts."""
+    if action in NO_SHOW_ACTIONS:
         return True
     return score is not None and score < C.FAIL_SCORE
 

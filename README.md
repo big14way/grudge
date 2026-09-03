@@ -219,7 +219,7 @@ Requirements: Python 3.10+, Node 20+, `uv`.
 ```bash
 # memory service
 uv venv --python 3.12 .venv
-uv pip install --python .venv/bin/python -e memory-service
+uv pip install --python .venv/bin/python -e "memory-service[test]"
 .venv/bin/python -m pytest memory-service                # 31 tests
 
 # broker

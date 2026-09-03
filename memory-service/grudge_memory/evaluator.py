@@ -68,8 +68,8 @@ def evaluate(spec: dict[str, Any], delivery: str | None) -> dict[str, Any]:
 DEFAULT_SPECS: dict[str, dict[str, Any]] = {
     "research": {
         "category": "research",
-        "sla_seconds": 900,
-        "base_size_usdc": 0.10,
+        "sla_seconds": 1800,
+        "base_size_usdc": 0.50,     # unknown cap 0.05, probation cap 0.125: live offerings run 0.01 to 0.03
         "criteria": [
             {"id": "length", "type": "min_words", "value": 150},
             {"id": "sources", "type": "min_count", "value": 2, "pattern": r"https?://"},

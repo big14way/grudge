@@ -109,14 +109,21 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
     let evaluation = null;
     let balanceBeforeFund = null;
     let done = false;
-    const timer = setTimeout(() => { if (!done) { done = true; reject(new Error(`job ${jobId} timed out after ${a.timeout}s`)); } }, Number(a.timeout) * 1000);
+    // Wait at least the spec SLA: silence inside the SLA is not yet a fault, silence past it is.
+    const waitS = Math.max(Number(a.timeout), Number(spec?.sla_seconds || 0));
+    const timer = setTimeout(async () => {
+      if (done) return;
+      log("GRUDGE", `job ${jobId}: no delivery after ${waitS}s (SLA ${spec?.sla_seconds}s). Recording a no-show.`);
+      try { await finish("unresponsive", { reason: `no response within ${waitS}s`, lesson: "provider did not respond inside the SLA; treat silence as a failure" }); }
+      catch (err) { done = true; reject(err); }
+    }, waitS * 1000);
 
     const finish = async (action, extra = {}) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
       const latency = (Date.now() - t0) / 1000;
-      const score = evaluation?.score ?? (action === "released" ? 1 : 0);
+      const score = evaluation?.score ?? (action === "released" ? 1 : action === "unresponsive" || action === "expired" ? null : 0);
       const outcome = await memory.outcome({
         provider: chosen.address, acp_job_id: Number(jobId), category: a.category, score, action,
         reason: extra.reason || evaluation?.notes || action,
@@ -224,6 +231,11 @@ async function main() {
   }
   if (!candidates.length) { log("GRUDGE", "no candidates"); process.exit(4); }
 
+  // One multi-record question per session, answered across linked journal records (two Sibyl stages + exact).
+  const q = `${a.category} specfail overcharged`;
+  const mr = await memory.multi(q);
+  log("MEMORY", `multi-record "${q}": ${mr.verdict}, ${mr.hits.length} admitted by Sibyl retrieve+verify, ${mr.exact.length} exact -> ${mr.providers.length ? mr.providers.map(short).join(", ") : "nobody"} failed ${a.category} AND overcharged`);
+
   const spec = (await memory.spec(a.category)).spec;
   const decision = await memory.decide({ category: a.category, budget_usdc: Number(a.budget) }, candidates);
   console.log(renderDecision(decision));
@@ -250,7 +262,7 @@ async function main() {
         }
       } catch (err) { log("CHAIN", `giveFeedback failed: ${err.shortMessage || err.message}`); }
     }
-    if (r.score < 0.5) {
+    if (r.score === null || r.score < 0.5) {
       if (retries > 0) { retries -= 1; log("GRUDGE", `stage ${stage} failed spec; retry budget allows one more attempt`); }
       else { log("GRUDGE", `stage ${stage} failed spec and retry budget is exhausted. Stopping.`); break; }
     }
@@ -259,7 +271,7 @@ async function main() {
   log("GRUDGE", `final: ${short(chosen.address)} status ${cp.status}${cp.vector ? ` trust ${JSON.stringify(cp.vector.trust)} failures ${cp.vector.failures.length}` : " (journal only)"}`);
   log("CHAIN", `${acp.txLog.length} transactions: ${acp.txLog.map((t) => t.hash).join(", ") || "none"}`);
   await acp.agent.stop();
-  process.exit(results.some((r) => r.score < 0.5) ? 6 : 0);
+  process.exit(results.some((r) => r.score === null || r.score < 0.5) ? 6 : 0);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

@@ -157,7 +157,7 @@ def test_hot_state_negotiation_cleared_on_outcome(store):
 
 def test_reference_spec_drives_evaluation_consistently(store):
     r = store.evaluate_delivery(A, "research", "short")
-    assert r["score"] < 0.5 and r["sla_seconds"] == 900
+    assert r["score"] < 0.5 and r["sla_seconds"] == 1800
     store.set_spec(A, "research", {"criteria": [{"id": "any", "type": "min_words", "value": 1}],
                                    "sla_seconds": 10, "base_size_usdc": 0.1})
     assert store.evaluate_delivery(A, "research", "short")["score"] == 1.0

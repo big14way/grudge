@@ -1,5 +1,5 @@
 {
-  "note": "Base mainnet pool. The GRUDGE sandbox provider has no registered offering yet, so the broker uses a raw ACP createJob. public_score comes from ERC-8004 when --erc8004 is passed, else null (unknown).",
+  "note": "Base mainnet pool. Clawpump is a live third-party ACP provider (offering resolved by name). The GRUDGE sandbox provider has no registered offering, so the broker uses a raw ACP createJob for it. public_score is the ERC-8004 summary when --erc8004 is passed, else the ACP rating stand-in.",
   "candidates": [
     {
       "address": "0x39d04d783e7d0a969c1c585ad26c3a5faaafee6f",
@@ -7,6 +7,15 @@
       "offering": null,
       "public_score": 0.97,
       "quoted_price_usdc": 0.01
+    },
+    {
+      "address": "0x3ce8dc26e2f1c26848563b94e4d980c69ad80ac5",
+      "name": "Clawpump (live)",
+      "offering": "Web Research Brief",
+      "requirements": "Topic or question (free text).",
+      "public_score": 0.9,
+      "quoted_price_usdc": 0.03,
+      "sla_minutes": 30
     }
   ]
 }

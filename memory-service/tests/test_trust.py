@@ -33,6 +33,9 @@ def test_failure_rule():
     assert T.is_failure(0.2, "released")
     assert not T.is_failure(0.6, "released")
     assert T.is_failure(0.9, "disputed")
+    assert T.is_failure(None, "unresponsive")
+    assert T.is_failure(None, "expired")
+    assert not T.is_failure(None, "released")
 
 
 def _vec_with_failures(n, age_days=0):
