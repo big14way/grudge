@@ -30,6 +30,11 @@ Full brief lives in the first commit's conversation; key constraints repeated he
 - DAY 1 TEST PASSED on mainnet: broker A (ungraduated) createJob -> job 75652, tx 0xdf2db6699866bcfee2d7a39ec1462e37408540b55e93f2aa70830d85f967859f. Left unfunded, expires.
 - hire.js falls back to raw createJob + requirement message when the candidate has no offering (pools/mainnet.json).
 
+## Rehearsal 2026-09-03 (grudge-rehearsal.db): FULL SEQUENCE PASSES LIVE
+Sandbox 2 = PROVIDER2 0xd82ac03a.. ERC-8004 agent 84571 (its first signer returned 500 from Virtuals; re-adding the signer fixed it).
+Session 1 jobs 75859/75860 (burn -> probation), session 2 jobs 75865/75866 (sandbox 2 hired, 5/5), broker B jobs 75867/75868.
+Demo pool = broker/pools/demo.json. Clawpump (live third party) is in pools/mainnet.json only; it no-showed on job 75818.
+
 ## Demo state
 ~/.sibyl-memory/grudge.db holds real memory: provider 0x39d04d78 is BLACKLISTED (3 live failures: jobs 75666, 75667, 75668) until ~2026-10-02.
 Refund observation verified live on job 75668 (refund_behavior -> 1.0).

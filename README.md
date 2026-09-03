@@ -198,6 +198,8 @@ All transactions below are on Base mainnet (chain 8453), 2 September 2026. Broke
 | Session 1, stage 2: spec 0/5, rejected, status → probation | 75667 | [giveFeedback 0](https://basescan.org/tx/0xde733402bd92192bfa4a86602504dcacaa586ed46e0ca99d70dbea601b87041a) |
 | Probation terms in another category, rejected, refund observed, status → blacklisted | 75668 | [giveFeedback 25](https://basescan.org/tx/0x8e8c3f77216452b8c31210472f81cdb23765555eedc42ca28b081cebb48a0824) |
 
+Full rehearsal on a fresh database, 3 September 2026, two sandbox providers (agents [84165](https://basescan.org/tx/0xbb1f082ddfb5cb7700a235e80b418d67829dd9442e6aed47cb7b1cf6423a3e2e) and [84571](https://basescan.org/tx/0x081dc5fa2271188e9fdea39b221653258850c2868608b1ea6726ab02d3466951)): session 1 hired sandbox 1 (public 0.97) and was burned on jobs 75859 and 75860, status probation. Session 2, cold start, refused sandbox 1 with a 46 % private premium and hired sandbox 2 (public 0.85), jobs 75865 and 75866 settled 5/5, [feedback 100](https://basescan.org/tx/0xe3c6655d8d9e2dfa4ec19381f45309b48fe8fcbcf85f8d26ff91c239f5746676). Broker B, never having met either, refused sandbox 1 on the consortium signal and hired sandbox 2, jobs 75867 and 75868. The live third-party provider Clawpump was also hired by offering name (job 75818) and recorded as a no-show when it never set a budget.
+
 After session 1 the memory log shows `PROMOTE journal -> entity`, then `REWRITTEN IN PLACE ... status=trusted -> probation`, then the redacted consortium signal. Session 2, started cold, refuses with `burned us on job 75667 on 2026-09-02T22:55:09Z; public score 0.97 ignored`. Broker B, a separate process that never met the provider, refuses on the consortium signal alone.
 
 ## 8. The deletion test
