@@ -9,6 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 os.environ["SIBYL_MEMORY_TELEMETRY"] = "0"
+os.environ["GRUDGE_SIBYL_CREDENTIALS"] = "/nonexistent/credentials.json"   # tests never touch a real account
 
 from grudge_memory.store import MemoryStore  # noqa: E402
 

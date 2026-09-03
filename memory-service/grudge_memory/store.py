@@ -34,6 +34,23 @@ DEFAULT_REPUTATION_REGISTRY = "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63"
 ZERO_ADDRESS = "0x" + "00" * 20
 
 
+def load_sibyl_credentials(path: str | None = None) -> dict[str, Any]:
+    """Read ~/.sibyl-memory/credentials.json written by `sibyl init`, if present.
+
+    Passing account_id / session_token / tier to the client is what lets Sibyl
+    verify the tier server-side and count our memory operations (the usage
+    heartbeat is a no-op for un-activated installs). Absent file = free tier,
+    fully local, which is how the tests run.
+    """
+    p = os.path.expanduser(path or os.environ.get("GRUDGE_SIBYL_CREDENTIALS", "~/.sibyl-memory/credentials.json"))
+    try:
+        with open(p, encoding="utf-8") as f:
+            raw = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return {k: raw.get(k) for k in ("account_id", "session_token", "tier", "tenant_id", "wallet", "email")}
+
+
 def _addr(a: str) -> str:
     a = (a or "").strip().lower()
     if not (a.startswith("0x") and len(a) == 42):
@@ -61,9 +78,13 @@ def commitment(chain_id: int, registry: str, broker: str, job_id: int, verdict: 
 class MemoryStore:
     def __init__(self, db_path: str, *, now_fn: Callable[[], datetime] | None = None,
                  log: Callable[[str], None] | None = None) -> None:
-        os.environ.setdefault("SIBYL_MEMORY_TELEMETRY", "0")
         self._db_path = os.path.expanduser(db_path)
-        self._client = MemoryClient.local(self._db_path, tenant_id="broker-a")
+        creds = load_sibyl_credentials()
+        self._client = MemoryClient.local(
+            self._db_path, tenant_id="broker-a", tier=creds.get("tier") or "free",
+            account_id=creds.get("account_id"), session_token=creds.get("session_token"),
+        )
+        self.account = creds.get("account_id")
         self._lock = threading.RLock()
         self._now = now_fn or T.utc_now
         self._log = log or (lambda s: print(s, flush=True))

@@ -19,8 +19,10 @@ def main() -> None:
     for tenant in ("broker-a", "broker-b"):
         store.seed_references(tenant)
     httpd = serve(store, args.host, args.port)
+    tier = store._client.get_tier()
     print(f"[MEMORY] service  up on http://{args.host}:{args.port} db={store.db_path} "
-          f"(single writer, WAL, busy_timeout 5000ms)", flush=True)
+          f"(single writer, WAL, busy_timeout 5000ms) sibyl tier={tier} "
+          f"account={'activated ' + str(store.account)[:8] + '..' if store.account else 'not activated, run sibyl init'}", flush=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
