@@ -1,20 +1,46 @@
 # GRUDGE
 
-A broker agent that hires Virtuals ACP provider agents, where its own private
-memory of past counterparties is the selection, pricing and terms engine.
+**Agents hire other agents on public reputation. Public reputation is one
+number, everyone sees the same one, and the provider that burned you yesterday
+still ranks first for you today.** GRUDGE is a buyer agent for Virtuals ACP
+whose own private memory of every counterparty decides who it hires, on what
+terms, and at what price. Delete the memory and it cannot decide at all.
 
-Public ERC-8004 reputation gives every buyer the same global score. GRUDGE
-keeps a private per-counterparty trust vector in Sibyl Memory and trusts it
-over the public number. ERC-8004's own authors say trust is a vector between
-two agents, not a universal scalar. GRUDGE is the missing private half.
+## The problem, concretely
 
-**Delete the memory layer and GRUDGE cannot rank, price or set terms. It
-exits.** That is the architecture, not a degradation. `scripts/deletion_test.sh`
-proves it in three phases.
+Agent-to-agent commerce is live. Virtuals ACP has hundreds of provider
+offerings priced from $0.01, and buyer agents pick providers automatically by
+success rate and rating. ERC-8004 puts an agent reputation registry on Base.
+Both give a buyer the same input: one aggregate score per provider.
 
-Built from scratch for the Sibyl Labs hackathon, September 2026. MIT.
+That input fails a buyer in four ways, and we hit every one of them while
+building this:
 
-## Three decisions, all computed only from memory
+1. **It is not yours.** The score is an average of other buyers' feedback
+   about other jobs. Your own outcome with that provider changes it by one
+   vote among hundreds. In our run the provider that missed our spec three
+   times in a row still carried its public score into the next session.
+2. **It is farmable.** Feedback costs one cheap job. Our own sandbox provider
+   went from no ERC-8004 history to a public score of 100 in two jobs, written
+   by a wallet we control. The registry cannot tell a real customer from a
+   sock puppet; ERC-8004's authors say so themselves and make `getSummary`
+   refuse to answer without a list of whose feedback to trust. The registry
+   refuses to be a universal scalar. Buyers use it as one anyway.
+3. **It is one dimension.** A provider can deliver on spec and overcharge, or
+   deliver fast and fight refunds, or be excellent at research and useless at
+   writing. One number hides all of that.
+4. **Agents forget.** A buyer agent restarts from zero each session. Even the
+   experience it did have is gone, so it rehires the same provider at the
+   same flat terms and loses the same money again. At $0.01 a job nobody
+   notices. At scale, an autonomous buyer bleeds on repeat failures with no
+   human in the loop.
+
+## What GRUDGE does about it
+
+GRUDGE keeps the missing half: a **private, per-counterparty trust vector**
+in Sibyl Memory, four dimensions plus per-category competence, learned only
+from jobs it ran itself, decayed over time, and trusted over the public
+number. From that memory it computes three things before every hire:
 
 | decision | from | without memory |
 |----------|------|----------------|
@@ -23,7 +49,17 @@ Built from scratch for the Sibyl Labs hackathon, September 2026. MIT.
 | WHAT PRICE | private risk premium from spec adherence, latency, refunds, observed price drift | not computable |
 
 A burned provider with the highest public score is passed over, and the
-refusal names the specific ACP job id and date.
+refusal names the specific ACP job id and date. A second broker that never met
+the provider refuses too, through a redacted consortium signal, so the
+cold-start problem is solved without sharing private data. And because the
+buyer's judgement is published back to ERC-8004 after every job, the public
+number slowly gets one honest vote it did not have before.
+
+**Delete the memory layer and GRUDGE cannot rank, price or set terms. It
+exits.** That is the architecture, not a degradation. `scripts/deletion_test.sh`
+proves it in three phases. Longer version: [docs/PROBLEM.md](docs/PROBLEM.md).
+
+Built from scratch for the Sibyl Labs hackathon, September 2026. MIT.
 
 ## Find every memory read and write in under two minutes
 
@@ -177,16 +213,8 @@ Demo script: [docs/DEMO.md](docs/DEMO.md).
 memory-service/   Python. Sole writer of the SQLite file. HTTP on localhost. 31 pytest.
 broker/           Node. Memory client with no fallback, ACP buyer, sandbox provider, ERC-8004.
 scripts/          deletion_test.sh, consortium_test.sh, memory_index.py
-docs/             TRUST_VECTOR.md, MEMORY_INDEX.md, DEMO.md, PRIOR_WORK.md
+docs/             PROBLEM.md, TRUST_VECTOR.md, MEMORY_INDEX.md, DEMO.md
 ```
-
-## Prior work declaration
-
-See [docs/PRIOR_WORK.md](docs/PRIOR_WORK.md). The two-tier agent/principal
-reputation idea and the payment-hook-into-escrow idea were studied from
-Clawback (github.com/EdwardJXLi/Clawback, ETHGlobal New York 2026). That repo
-carries no license, so no code was copied. GRUDGE's commitment hashing fixes
-the chain id and contract address omission in theirs.
 
 ## License
 

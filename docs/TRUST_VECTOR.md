@@ -186,7 +186,7 @@ Redacted. No prices, no job ids, no spec text, no evaluator notes.
 The commitment lets a broker later prove a specific report was theirs without
 the consortium ever holding the private detail. The preimage includes
 `chainid` and the registry address so it cannot be replayed across chains or
-deployments (the omission Clawback made).
+deployments.
 
 ## Decisions confirmed 2026-09-02
 

@@ -70,7 +70,8 @@ Three Virtuals ACP wallets (broker A, broker B, sandbox provider) in broker/.env
       Live ACP version = same flow via hire.js with --tenant broker-b --agent BROKER_B.
 - [x] 5. ERC-8004: provider registered as agent 84165 (identity EOA in .env). giveFeedback sent 4x from FEEDBACK EOA. See README live table.
 - [x] 6. thin terminal UI = broker/src/render.js (ranking table + [tag] logs). No dashboard.
-- [x] README, docs/MEMORY_INDEX.md (regenerate with scripts/memory_index.py after editing store.py; README key-site line numbers must be refreshed too), docs/PRIOR_WORK.md, docs/DEMO.md.
+- [x] README, docs/PROBLEM.md, docs/MEMORY_INDEX.md (regenerate with scripts/memory_index.py after editing store.py; README key-site line numbers must be refreshed too), docs/DEMO.md.
+- NO prior-work declaration anywhere (removed by user 2026-09-03). Do not cite any other project in the repo.
 
 ## Decisions locked (docs/TRUST_VECTOR.md bottom)
 alpha 0.35 / half-life 14d / TTL 30d; staged job with per-stage evaluation for demo session 1;
