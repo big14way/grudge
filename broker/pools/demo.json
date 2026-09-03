@@ -1,0 +1,19 @@
+{
+  "note": "Demo pool, Base mainnet. Two GRUDGE sandbox providers with raw ACP jobs. Provider 1 runs in burn mode and carries the higher public number; provider 2 runs in good mode. public_score stands in for the marketplace rating.",
+  "candidates": [
+    {
+      "address": "0x39d04d783e7d0a969c1c585ad26c3a5faaafee6f",
+      "name": "GRUDGE Research (sandbox 1, burn mode)",
+      "offering": null,
+      "public_score": 0.97,
+      "quoted_price_usdc": 0.01
+    },
+    {
+      "address": "0xd82ac03aba79b88213cec1a78832d85665526036",
+      "name": "GRUDGE Research 2 (sandbox 2, good mode)",
+      "offering": null,
+      "public_score": 0.85,
+      "quoted_price_usdc": 0.01
+    }
+  ]
+}

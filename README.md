@@ -237,10 +237,11 @@ For ACP and Base, copy `broker/.env.example` to `broker/.env` and fill in three 
 ```bash
 cd broker
 node src/wallet.js whoami                                                    # authenticate, show balances
-node src/provider.js --mode burn                                             # terminal 2
-node src/hire.js --pool pools/mainnet.json --budget 0.02 --feedback          # session 1
-node src/hire.js --pool pools/mainnet.json --budget 0.02                     # session 2: refuses
-GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --pool pools/mainnet.json --budget 0.02
+node src/provider.js --agent PROVIDER --mode burn                            # terminal 2, sandbox 1
+node src/provider.js --agent PROVIDER2 --mode good                           # terminal 3, sandbox 2
+node src/hire.js --pool pools/demo.json --budget 0.02 --feedback             # session 1: burned twice
+node src/hire.js --pool pools/demo.json --budget 0.02 --feedback             # session 2: refuses sandbox 1, hires sandbox 2
+GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --pool pools/demo.json --budget 0.02
 ```
 
 While the service runs, `http://127.0.0.1:7411/ui` serves a read-only viewer of the trust vectors, consortium signals, HOT state, journal and the live `[MEMORY]` log. It is served by the memory service itself, its reads bypass the memory operation counters, and it goes dark with a "MEMORY LAYER GONE" banner the moment the service stops.

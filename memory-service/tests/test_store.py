@@ -33,10 +33,11 @@ def test_new_counterparty_stays_in_journal_until_three_samples(store, logs):
 
 
 def test_two_failures_promote_early_into_probation(store):
-    store.record_outcome(A, outcome(BURN, 10, 0.2))
-    r = store.record_outcome(A, outcome(BURN, 11, 0.1))
+    store.record_outcome(A, outcome(BURN, 10, 0.2, refunded=True))
+    r = store.record_outcome(A, outcome(BURN, 11, 0.1, refunded=True))
     assert r["promoted"] and r["status"] == C.STATUS_PROBATION
     assert [f["acp_job_id"] for f in r["vector"]["failures"]] == [10, 11]
+    assert r["vector"]["trust"]["refund_behavior"] == 1.0   # refund observations survive the journal -> entity rebuild
 
 
 def test_trust_vector_rewritten_in_place_never_appended(store, logs):

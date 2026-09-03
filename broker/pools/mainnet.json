@@ -16,6 +16,13 @@
       "public_score": 0.9,
       "quoted_price_usdc": 0.03,
       "sla_minutes": 30
+    },
+    {
+      "address": "0xd82ac03aba79b88213cec1a78832d85665526036",
+      "name": "GRUDGE Research 2 (sandbox 2)",
+      "offering": null,
+      "public_score": 0.85,
+      "quoted_price_usdc": 0.01
     }
   ]
 }

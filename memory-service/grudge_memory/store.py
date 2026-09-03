@@ -341,7 +341,7 @@ class MemoryStore:
                        "charged_price_usdc": outcome.get("charged_price_usdc"),
                        "latency_s": outcome.get("latency_s"), "sla_s": outcome.get("sla_s"),
                        "tx_hash": outcome.get("tx_hash"), "chain_id": outcome.get("chain_id"),
-                       "tags": tags},
+                       "refunded": outcome.get("refunded"), "tags": tags},
                 ts=ts,
             )
             self._mem("write", f"tenant={tenant} journal event {event_id[:8]} job={outcome.get('acp_job_id')} "
@@ -398,7 +398,7 @@ class MemoryStore:
                 "score": ev.get("score"), "action": ac.get("action"), "reason": ev.get("notes"),
                 "latency_s": ex.get("latency_s"), "sla_s": ex.get("sla_s"),
                 "quoted_price_usdc": ex.get("quoted_price_usdc"), "charged_price_usdc": ex.get("charged_price_usdc"),
-                "ts": e.get("ts"),
+                "refunded": ex.get("refunded"), "ts": e.get("ts"),
             }, now)
         return vec
 

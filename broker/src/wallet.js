@@ -43,7 +43,7 @@ async function balances(address) {
 }
 
 async function whoami() {
-  for (const prefix of ["BROKER_A", "BROKER_B", "PROVIDER"]) {
+  for (const prefix of ["BROKER_A", "BROKER_B", "PROVIDER", "PROVIDER2"]) {
     try {
       const { agent, address } = await createAgent(prefix, { label: prefix });
       const me = await agent.getMe().catch((e) => ({ error: e.message }));

@@ -7,8 +7,10 @@ viewer's header shows the service clock too.
 
 Before recording:
 ```
-.venv/bin/python -m grudge_memory --db ~/.sibyl-memory/grudge-demo.db      # left pane, fresh DB
-cd broker && node src/provider.js --mode burn                                # sandbox provider, separate terminal
+.venv/bin/python -m grudge_memory --db ~/.sibyl-memory/grudge-demo.db        # left pane, FRESH DB path
+cd broker && node src/provider.js --agent PROVIDER  --mode burn               # sandbox 1, separate terminal
+cd broker && node src/provider.js --agent PROVIDER2 --mode good               # sandbox 2, separate terminal
+open http://127.0.0.1:7411/ui                                                 # memory viewer
 ```
 Rehearsed live on Base mainnet 2026-09-02 (jobs 75664 to 75667). Each session
 costs 0.01 USDC per stage; rejected stages refund.
@@ -21,7 +23,7 @@ none of them you.
 
 ## 0:30 Session 1: GRUDGE hires the top public score and gets burned
 ```
-node src/hire.js --tenant broker-a --category research --budget 0.02 --pool pools/mainnet.json --feedback
+node src/hire.js --tenant broker-a --category research --budget 0.02 --pool pools/demo.json --feedback
 ```
 - The ranking table: all candidates `unknown`, the sandbox provider has the
   highest public score, terms engine gives STAGED (2x), evaluator required,
@@ -38,11 +40,12 @@ Ctrl-C the broker pane. Show the empty terminal. The memory service stays up.
 
 ## 1:45 Session 2: cold start, same pool, GRUDGE refuses and names the job
 ```
-node src/hire.js --tenant broker-a --category research --budget 0.02 --pool pools/mainnet.json --feedback
+node src/hire.js --tenant broker-a --category research --budget 0.02 --pool pools/demo.json --feedback
 ```
-- Same candidates. The sandbox provider now shows `probation`, verdict
-  REFUSE, reason `burned us on job <id> on <date>; public score X ignored`.
-- GRUDGE hires the next candidate, or exits 5 if nobody else is acceptable.
+- Same candidates. Sandbox 1 now shows `probation`, verdict REFUSE, reason
+  `burned us on job <id> on <date>; public score 0.97 ignored`.
+- GRUDGE hires sandbox 2 (public 0.85) on probe terms; both stages pass 5/5.
+  That is the WHO decision on screen: the lower public number wins.
 DO NOT CUT HERE.
 
 ## 2:30 Deletion test, live
@@ -56,7 +59,7 @@ to "MEMORY LAYER GONE" within two seconds. Restart it afterwards.
 
 ## 3:00 Broker B, separate process, never met the provider
 ```
-GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --category research --budget 0.02 --pool pools/mainnet.json
+GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --category research --budget 0.02 --pool pools/demo.json
 ```
 - `broker-b` private view: unknown. Consortium: 2 live failures reported by
   broker-a. Verdict REFUSE, reason starts with `consortium:`.
