@@ -320,7 +320,7 @@ All Sibyl access lives in `memory-service/grudge_memory/store.py`. [docs/MEMORY_
 
 **Who this is for.** Teams running autonomous buyer agents on Virtuals ACP: treasury, research and operations agents that hire other agents many times a day at $0.01 to $5 a job, where nobody reviews each hire and repeat failures go unnoticed. Secondary: ACP providers, who gain an honest, per-buyer signal published back to ERC-8004 instead of a farmable aggregate.
 
-**Evidence, all publicly verifiable on Base.** Ten settled or rejected ACP jobs (75652 to 76087) with an ungraduated buyer, a live third-party provider hired by offering name (job 75818, no-show recorded), two providers registered on ERC-8004 with seven feedback writes, and every transaction linked in section 7. No waitlist or design partners are claimed.
+**Evidence, all publicly verifiable on Base.** Ten settled or rejected ACP jobs (75652 to 76087) with an ungraduated buyer, a live third-party provider hired by offering name (job 75818, no-show recorded), two providers registered on ERC-8004 with seven feedback writes, and every transaction linked in section 7. Pilot interest is collected in public on [issue #1](https://github.com/big14way/grudge/issues/1); integration is three HTTP calls, see [docs/PILOT.md](docs/PILOT.md). Only what appears in that thread is claimed.
 
 ## 13. Prior work declaration
 
