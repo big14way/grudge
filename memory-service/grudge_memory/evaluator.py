@@ -78,6 +78,17 @@ DEFAULT_SPECS: dict[str, dict[str, Any]] = {
             {"id": "structure", "type": "regex", "value": r"(?m)^(#|\d+\.|-)\s"},
         ],
     },
+    "brief": {
+        # short market / data answers from live micro-offerings: judged on substance, not length
+        "category": "brief",
+        "sla_seconds": 600,
+        "base_size_usdc": 0.50,
+        "criteria": [
+            {"id": "substance", "type": "min_words", "value": 40},
+            {"id": "not_error", "type": "regex", "value": r"^(?![\s\S]*(?:\berror\b|\bfailed\b|\bunavailable\b)[\s\S]{0,40}$)"},
+            {"id": "answers", "type": "contains_any", "value": ["summary", "overview", "risk", "signal", "score", "price", "trend", "sentiment", "regime", "reputation", "analysis", "market", "%"]},
+        ],
+    },
     "writing": {
         "category": "writing",
         "sla_seconds": 600,

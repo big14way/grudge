@@ -33,6 +33,8 @@ const { values: a } = parseArgs({
     feedback: { type: "boolean", default: false },
     "dry-run": { type: "boolean", default: false },
     erc8004: { type: "boolean", default: false },
+    only: { type: "string" },          // restrict the pool to one provider address
+    task: { type: "string" },          // natural-language task for live providers (default: the spec criteria)
     timeout: { type: "string", default: "900" },
   },
 });
@@ -71,6 +73,7 @@ async function candidatesFromBrowse(agent, keyword) {
 }
 
 function specText(spec, stage, stages) {
+  if (a.task) return `${a.task}${stages > 1 ? ` (stage ${stage} of ${stages})` : ""}`;
   const crit = (spec?.criteria || []).map((c) => `${c.id}: ${c.type} ${JSON.stringify(c.value)}${c.pattern ? ` /${c.pattern}/` : ""}`);
   return `GRUDGE ${a.category} job${stages > 1 ? ` (stage ${stage} of ${stages})` : ""}. Deliver plain text meeting ALL of: ${crit.join("; ")}.`;
 }
@@ -123,7 +126,7 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
       done = true;
       clearTimeout(timer);
       const latency = (Date.now() - t0) / 1000;
-      const score = evaluation?.score ?? (action === "released" ? 1 : action === "unresponsive" || action === "expired" ? null : 0);
+      const score = evaluation?.score ?? (action === "released" ? 1 : ["unresponsive", "expired", "refused"].includes(action) ? null : 0);
       const outcome = await memory.outcome({
         provider: chosen.address, acp_job_id: Number(jobId), category: a.category, score, action,
         reason: extra.reason || evaluation?.notes || action,
@@ -146,8 +149,10 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
             case "budget.set": {
               const amount = Number(ev.amount);
               if (amount > chosen.max_price_usdc + 1e-9) {
-                log("GRUDGE", `budget ${amount} exceeds our max price ${chosen.max_price_usdc} (private premium ${Math.round(chosen.risk_premium * 100)}%). NOT funding.`);
-                await finish("refused", { reason: `price: budget ${amount} > max ${chosen.max_price_usdc}`, lesson: "provider prices above our private risk-adjusted ceiling" });
+                log("GRUDGE", `budget ${amount} exceeds our max price ${chosen.max_price_usdc} (quoted ${chosen.quoted_price_usdc}, private premium ${Math.round(chosen.risk_premium * 100)}%). NOT funding.`);
+                // Nothing was delivered, so this is a price observation only: no spec score, no public feedback.
+                funded = amount;
+                await finish("refused", { reason: `price: budget ${amount} > max ${chosen.max_price_usdc} (quoted ${chosen.quoted_price_usdc})`, lesson: "provider set a budget above its quote; premium rises via price_drift" });
                 return;
               }
               await memory.inflight(Number(jobId), { stage: "budget.set", amount, max_price_usdc: chosen.max_price_usdc, terms });
@@ -198,7 +203,8 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
     const text = specText(spec, stage, stages);
     const opts = terms.require_evaluator ? { evaluatorAddress: buyer } : {};
     if (chosen.offering) {
-      const requirement = fillRequirement(chosen.requirements, text);
+      const requirement = fillRequirement(chosen.requirements, text, { address: buyer });
+      log("ACP", `requirement ${JSON.stringify(requirement).slice(0, 160)}`);
       log("ACP", `createJobByOfferingName chain ${CHAIN} offering "${chosen.offering}" provider ${short(chosen.address)} evaluator ${terms.require_evaluator ? "self" : "none"}`);
       jobId = await agent.createJobByOfferingName(CHAIN, chosen.offering, chosen.address, requirement, opts);
       log("ACP", `job ${jobId} created`);
@@ -229,6 +235,7 @@ async function main() {
   } else {
     candidates = await candidatesFromPool(a.pool || "pools/sample.json");
   }
+  if (a.only) candidates = candidates.filter((c) => c.address === a.only.toLowerCase());
   if (!candidates.length) { log("GRUDGE", "no candidates"); process.exit(4); }
 
   // One multi-record question per session, answered across linked journal records (two Sibyl stages + exact).
@@ -252,7 +259,7 @@ async function main() {
     log("GRUDGE", `stage ${stage}/${stages}: terms cap ${terms.max_job_usdc} USDC, evaluator ${terms.require_evaluator ? "required" : "waived"}, retries left ${retries}, dispute window ${terms.dispute_window_s}s`);
     const r = await runJob(acp, chosen, spec, stage, stages, terms);
     results.push(r);
-    if (a.feedback && r.outcome) {
+    if (a.feedback && r.outcome && r.score !== null) {   // only publish a judgement when there was a delivery to judge
       try {
         const agentId = chosen.erc8004?.agentId ?? (await resolveAgentId(chosen.address));
         if (agentId === null || agentId === undefined) log("CHAIN", `no ERC-8004 agentId for ${short(chosen.address)}; skipping giveFeedback`);
@@ -262,6 +269,7 @@ async function main() {
         }
       } catch (err) { log("CHAIN", `giveFeedback failed: ${err.shortMessage || err.message}`); }
     }
+    if (r.action === "refused") { log("GRUDGE", "price refusal: not retrying the same provider"); break; }
     if (r.score === null || r.score < 0.5) {
       if (retries > 0) { retries -= 1; log("GRUDGE", `stage ${stage} failed spec; retry budget allows one more attempt`); }
       else { log("GRUDGE", `stage ${stage} failed spec and retry budget is exhausted. Stopping.`); break; }

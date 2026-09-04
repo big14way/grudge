@@ -1,0 +1,67 @@
+{
+  "note": "Live third-party ACP providers on Base mainnet, online with 5 to 10 minute SLAs, hired by offering name. Category brief.",
+  "candidates": [
+    {
+      "address": "0x93d8ca84641b2a069d8129b9b5fa3809aa9d8a79",
+      "name": "blocknuri",
+      "offering": "blocknuri_service",
+      "requirements": {
+        "type": "object",
+        "required": [
+          "task"
+        ],
+        "properties": {
+          "task": {
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "summary",
+              "analysis",
+              "plan"
+            ],
+            "type": "string"
+          }
+        }
+      },
+      "public_score": 0.9,
+      "quoted_price_usdc": 0.02,
+      "sla_minutes": 5
+    },
+    {
+      "address": "0x66ebcaf75684c1add77770053de6256937d9f591",
+      "name": "COINGAZURA",
+      "offering": "coingazura_market_preview_micro",
+      "requirements": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string"
+          }
+        }
+      },
+      "public_score": 0.9,
+      "quoted_price_usdc": 0.01,
+      "sla_minutes": 5
+    },
+    {
+      "address": "0x4206f1b894a59030a87fd54d6d68314756095d3e",
+      "name": "OuroBoroZ",
+      "offering": "wallet-reputation",
+      "requirements": {
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "properties": {
+          "address": {
+            "type": "string"
+          }
+        }
+      },
+      "public_score": 0.9,
+      "quoted_price_usdc": 0.03,
+      "sla_minutes": 10
+    }
+  ]
+}

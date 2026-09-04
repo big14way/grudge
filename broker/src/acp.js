@@ -53,17 +53,23 @@ export async function createAgent(prefix, { label = prefix } = {}) {
 }
 
 /** Fill an offering's JSON-schema requirement with our spec text. Best effort. */
-export function fillRequirement(requirements, text) {
+export function fillRequirement(requirements, text, { address } = {}) {
   if (typeof requirements === "string" || !requirements) return text;
   const props = requirements.properties || {};
+  const required = new Set(requirements.required || []);
+  // fill required fields and any string field that looks like the free-text task
+  const wanted = (k, def) => required.has(k) || /task|question|query|topic|prompt|message|text|request|asset|q$/i.test(k) || def?.enum;
   const out = {};
   for (const [k, def] of Object.entries(props)) {
-    const t = def?.type;
-    if (t === "string" || !t) out[k] = text;
-    else if (t === "number" || t === "integer") out[k] = def.minimum ?? 1;
-    else if (t === "boolean") out[k] = true;
-    else if (t === "array") out[k] = [text];
-    else out[k] = text;
+    if (!wanted(k, def)) continue;
+    const t = Array.isArray(def?.type) ? def.type[0] : def?.type;
+    if (def?.enum) out[k] = def.enum[0];
+    else if (def?.format === "address" || /address|wallet/i.test(k)) out[k] = address || text;
+    else if (t === "string" || !t) out[k] = /^(asset|token|symbol|ticker)$/i.test(k) ? "ETH" : text;
+    else if (t === "number" || t === "integer") out[k] = def.minimum ?? def.default ?? 7;
+    else if (t === "boolean") out[k] = false;
+    else if (t === "array") out[k] = def.items?.type === "string" ? ["ETH", "USDC"] : [text];
+    else if (t === "object") out[k] = {};
   }
   return Object.keys(out).length ? out : text;
 }
