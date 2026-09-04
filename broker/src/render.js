@@ -28,5 +28,17 @@ export function renderDecision(d) {
   }
   lines.push(d.chosen ? `-> HIRE ${d.chosen.address} (${d.chosen.status}, private ${num(d.chosen.private_score)}, pay <= ${num(d.chosen.max_price_usdc, 4)} USDC)`
                       : "-> NO ACCEPTABLE PROVIDER");
+  const c = d.counterfactual;
+  if (c) {
+    lines.push("");
+    lines.push(`   WITHOUT MEMORY: hire ${short(c.address)} (top public ${num(c.public_score)}), single job, no evaluator, 0 retries, escrow ${num(c.max_price_usdc, 4)} USDC`);
+    lines.push(`   memory knows this provider as ${c.memory_says}${c.live_failures ? ` with ${c.live_failures} live failure${c.live_failures > 1 ? "s" : ""}` : ""}`);
+    if (d.chosen && c.delta) {
+      const dl = c.delta;
+      lines.push(`   WITH MEMORY:    ${dl.provider_changed ? `different provider (${short(d.chosen.address)})` : "same provider"}; escrow cap ${dl.escrow_cap}, max price ${dl.max_price}, stages ${dl.staged}, evaluator ${dl.evaluator}, retries ${dl.retries}, dispute window ${dl.dispute_window_s}s`);
+    } else if (!d.chosen) {
+      lines.push(`   WITH MEMORY:    no hire. The memoryless broker would have paid ${short(c.address)} again.`);
+    }
+  }
   return lines.join("\n");
 }

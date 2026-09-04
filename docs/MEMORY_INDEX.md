@@ -30,11 +30,11 @@ All Sibyl Memory access lives in one file: `memory-service/grudge_memory/store.p
 | [357](memory-service/grudge_memory/store.py#L357) | `record_outcome` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
 | [370](memory-service/grudge_memory/store.py#L370) | `record_outcome` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
 | [445](memory-service/grudge_memory/store.py#L445) | `decide` | SEARCH cross-tier | read | `hits = self._use(tenant).search(address, limit=50)` |
-| [513](memory-service/grudge_memory/store.py#L513) | `snapshot` | WARM | read | `for r in c.list_entities(C.CATEGORY_COUNTERPARTY, limit=50):` |
-| [521](memory-service/grudge_memory/store.py#L521) | `snapshot` | HOT | read | `inflight = c.get_state("inflight")` |
-| [522](memory-service/grudge_memory/store.py#L522) | `snapshot` | COLD | read | `out["tenants"][tenant] = {"counterparties": rows, "events": c.read_events(limit=events),` |
-| [526](memory-service/grudge_memory/store.py#L526) | `snapshot` | WARM | read | `for r in c.list_entities(C.CATEGORY_SIGNAL, limit=50):` |
-| [552](memory-service/grudge_memory/store.py#L552) | `multi_query` | SEARCH multi-record | read | `hits = multi_record_search(self._use(tenant), query, limit=limit, diagnostics=diag)` |
+| [539](memory-service/grudge_memory/store.py#L539) | `snapshot` | WARM | read | `for r in c.list_entities(C.CATEGORY_COUNTERPARTY, limit=50):` |
+| [547](memory-service/grudge_memory/store.py#L547) | `snapshot` | HOT | read | `inflight = c.get_state("inflight")` |
+| [548](memory-service/grudge_memory/store.py#L548) | `snapshot` | COLD | read | `out["tenants"][tenant] = {"counterparties": rows, "events": c.read_events(limit=events),` |
+| [552](memory-service/grudge_memory/store.py#L552) | `snapshot` | WARM | read | `for r in c.list_entities(C.CATEGORY_SIGNAL, limit=50):` |
+| [578](memory-service/grudge_memory/store.py#L578) | `multi_query` | SEARCH multi-record | read | `hits = multi_record_search(self._use(tenant), query, limit=limit, diagnostics=diag)` |
 
 31 call sites. Brokers reach them only through HTTP (`broker/src/memory.js`).
 

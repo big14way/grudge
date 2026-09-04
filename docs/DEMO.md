@@ -48,6 +48,20 @@ node src/hire.js --tenant broker-a --category research --budget 0.02 --pool pool
   That is the WHO decision on screen: the lower public number wins.
 DO NOT CUT HERE.
 
+Every ranking now ends with two lines, read them aloud:
+`WITHOUT MEMORY: hire <sandbox 1> (top public 0.97), single job, no evaluator`
+`WITH MEMORY: different provider; escrow cap ..., stages 2, evaluator yes, retries 1`
+
+## 2:20 Session 3, ten seconds: what trust buys
+```
+node src/hire.js --tenant broker-a --category research --budget 0.02 --pool pools/demo.json --dry-run
+```
+Run this AFTER session 2 settled (sandbox 2 now has 2 clean samples, one
+more session promotes it). If time allows run one more real session first;
+the dry run then shows sandbox 2 as `trusted`: single stage, evaluator
+waived, 2 retries, 0 % premium, escrow cap 0.02 -> 0.71. Memory does not
+only hold grudges, it makes hiring a proven provider cheaper and faster.
+
 ## 2:30 Deletion test, live
 ```
 scripts/deletion_test.sh

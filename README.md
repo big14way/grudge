@@ -55,6 +55,21 @@ Consequences a buyer can see:
 
 None of the three decisions has a fallback formula. Stop the memory service and the broker exits. Wipe the database and the broker hires the provider that burned it. Section 8 performs both.
 
+### How memory changes the build, session by session
+
+Every decision prints the memoryless counterfactual next to it: the provider the public score would pick, at flat terms. This is the rehearsal of 3 and 4 September on Base mainnet, one buyer, two sandbox providers, fresh database at session 1.
+
+| session | memory state | memoryless broker would | GRUDGE did | why |
+|---------|--------------|-------------------------|------------|-----|
+| 1 | empty | hire sandbox 1 (public 0.97), one job, no evaluator, full budget | same provider, but staged 2x, evaluator required, 1 retry, 10 % escrow cap, 21 % premium | unknown counterparty: probe terms limit the blast radius |
+| 1 outcome | | pay for a 0/5 delivery | rejected both stages, escrow refunded, provider promoted straight to **probation** | two spec failures inside one staged job |
+| 2, cold start | 2 live failures on sandbox 1 | hire sandbox 1 again, flat terms | **refused** sandbox 1 naming job 75860, 46 % premium; hired sandbox 2 (public 0.85) on probe terms | grudge held across a restart |
+| 3 | sandbox 2 at 2 clean samples | hire sandbox 1 again | hired sandbox 2 with private score 0.93 while still journal-only; third delivery promoted it to **trusted** | competence learned before promotion |
+| 4 decision | sandbox 2 trusted, 4 samples | hire sandbox 1 again | sandbox 2: single stage, evaluator waived, 2 retries, 0 % premium, escrow cap 0.02 → 0.71 | trust earned, terms loosen, hiring gets cheaper and faster |
+| broker B, cold | its own memory empty | hire sandbox 1 | **refused** sandbox 1 on the consortium signal, hired sandbox 2 | cross-broker signal, no private data shared |
+
+Delete the database between any two rows and the next row collapses back to the memoryless column. That is what `scripts/deletion_test.sh` shows.
+
 ## 3. Architecture
 
 One Python process owns the SQLite file and serves HTTP on localhost. The Node brokers are clients of it and hold no ranking, pricing or terms logic of their own.

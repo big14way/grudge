@@ -96,6 +96,10 @@ def test_decide_passes_over_top_public_score_and_names_the_job(store, clock):
     good = d["chosen"]
     assert good["private_score"] > newb["private_score"]
     assert good["terms"]["retry_budget"] == 2
+    # the counterfactual is stated: a memoryless broker takes the top public score at flat terms
+    cf = d["counterfactual"]
+    assert cf["address"] == BURN and cf["memory_says"] == C.STATUS_PROBATION and cf["live_failures"] == 2
+    assert cf["delta"]["provider_changed"] is True and cf["terms"]["require_evaluator"] is False
 
 
 def test_probation_provider_allowed_in_other_category_at_probation_terms(store):

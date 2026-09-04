@@ -492,11 +492,37 @@ class MemoryStore:
         ranked.sort(key=lambda r: (r["verdict"] != "hire", T.STATUS_RANK.get(r["status"], 9),
                                    -r["private_score"], -(r["public_score"] or 0)))
         chosen = next((r for r in ranked if r["verdict"] == "hire"), None)
+
+        # The counterfactual, stated outright: a broker with no memory has one input (the
+        # public score) and one policy (top score, flat terms, full budget, no evaluator).
+        memoryless = max(ranked, key=lambda r: (r["public_score"] or 0)) if ranked else None
+        counterfactual = None
+        if memoryless is not None:
+            counterfactual = {
+                "address": memoryless["address"], "public_score": memoryless["public_score"],
+                "terms": {"max_job_usdc": budget, "staged": False, "stages": 1, "require_evaluator": False,
+                          "retry_budget": 0, "dispute_window_s": 0},
+                "max_price_usdc": budget,
+                "memory_says": memoryless["status"], "live_failures": len(memoryless["evidence"].get("live_failures", [])),
+                "same_as_memory": bool(chosen and chosen["address"] == memoryless["address"]),
+                "delta": {},
+            }
+            if chosen:
+                ct, mt = chosen["terms"], counterfactual["terms"]
+                counterfactual["delta"] = {
+                    "provider_changed": chosen["address"] != memoryless["address"],
+                    "escrow_cap": f"{mt['max_job_usdc']} -> {ct['max_job_usdc']}",
+                    "max_price": f"{budget} -> {chosen['max_price_usdc']}",
+                    "staged": f"{mt['stages']} -> {ct['stages']}", "evaluator": f"no -> {'yes' if ct['require_evaluator'] else 'no'}",
+                    "retries": f"0 -> {ct['retry_budget']}", "dispute_window_s": f"0 -> {ct['dispute_window_s']}",
+                }
         self._mem("read", f"tenant={tenant} DECIDE {category}: "
                           + (f"hire {chosen['address'][:10]} ({chosen['status']}, private {chosen['private_score']})"
                              if chosen else "no acceptable provider")
-                          + f"; refused {sum(1 for r in ranked if r['verdict'] == 'refuse')}/{len(ranked)}")
-        return {"job": job, "ranked": ranked, "chosen": chosen, "decided_at": T.iso(now)}
+                          + f"; refused {sum(1 for r in ranked if r['verdict'] == 'refuse')}/{len(ranked)}"
+                          + (f" | MEMORYLESS would hire {memoryless['address'][:10]} (public {memoryless['public_score']}, "
+                             f"flat terms, {len(memoryless['evidence'].get('live_failures', []))} live failures known to us)" if memoryless else ""))
+        return {"job": job, "ranked": ranked, "chosen": chosen, "counterfactual": counterfactual, "decided_at": T.iso(now)}
 
     # --------------------------------------------------------------- viewer
     def snapshot(self, *, events: int = 15) -> dict[str, Any]:

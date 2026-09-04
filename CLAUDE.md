@@ -35,6 +35,11 @@ Sandbox 2 = PROVIDER2 0xd82ac03a.. ERC-8004 agent 84571 (its first signer return
 Session 1 jobs 75859/75860 (burn -> probation), session 2 jobs 75865/75866 (sandbox 2 hired, 5/5), broker B jobs 75867/75868.
 Demo pool = broker/pools/demo.json. Clawpump (live third party) is in pools/mainnet.json only; it no-showed on job 75818.
 
+## Counterfactual (2026-09-04)
+decide() returns `counterfactual` (memoryless pick = top public score, flat terms) and logs "MEMORYLESS would hire ..."
+render.js prints WITHOUT MEMORY / WITH MEMORY lines. Session 3 (jobs 76085, 76087) promoted sandbox 2 to trusted;
+dry-run then shows single stage, no evaluator, retries 2, cap 0.7125. README section 2 has the session table.
+
 ## Demo state
 ~/.sibyl-memory/grudge.db holds real memory: provider 0x39d04d78 is BLACKLISTED (3 live failures: jobs 75666, 75667, 75668) until ~2026-10-02.
 Refund observation verified live on job 75668 (refund_behavior -> 1.0).
