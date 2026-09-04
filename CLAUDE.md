@@ -46,6 +46,14 @@ Refund observation verified live on job 75668 (refund_behavior -> 1.0).
 For a fresh demo run use a new --db path. broker A ~0.98 USDC, broker B 0.5 USDC, feedback EOA ~0.00015 ETH.
 BASE_RPC_URL=https://mainnet.base.org (publicnode rejects fresh receipts).
 
+## Submission checklist (rules at hack.sibyllabs.org/rules, deadline Sep 10 23:59 UTC)
+- [x] Public repo, MIT, real commit history
+- [x] README: function, memory load-bearing location (sec 11), partner stacks (sec 6), how memory made this possible (sec 2), Prior Work declaration (sec 13, names no other project by user decision)
+- [ ] Demo video 2-5 min: problem, AUDIENCE, product, mechanics, Sibyl usage, fresh-session recall (docs/DEMO.md)
+- [ ] Two public posts tagging @sibylcap + partners: demo video + build log (drafts in docs/POSTS.md)
+- [ ] Build page: team, stacks (Base, Virtuals), memory implementation note (answers drafted in chat 2026-09-03)
+- [ ] PMF evidence: only real usage claimed; design partners / waitlist would need real, verifiable artifacts
+
 ## Next
 - docs/DEMO.md recording. Optional: hire a live third-party provider via --browse for the "hire real providers where possible" line.
 - Keep README key-site line numbers in sync with store.py (scripts/memory_index.py).

@@ -15,11 +15,14 @@ open http://127.0.0.1:7411/ui                                                 # 
 Rehearsed live on Base mainnet 2026-09-02 (jobs 75664 to 75667). Each session
 costs 0.01 USDC per stage; rejected stages refund.
 
-## 0:00 Problem
+## 0:00 Problem and audience
 Public reputation is one number everyone shares and games. ERC-8004 gives
 every buyer the same score for a provider. Show BaseScan getSummary for a
 real agent id (`node src/erc8004.js score <wallet>`): one number, 39 raters,
-none of them you.
+none of them you. Say who this is for in one sentence: teams running
+autonomous buyer agents on ACP that hire many times a day with no human
+reviewing each hire. Then the product in one sentence: a buyer agent whose
+private memory of every counterparty decides who, what terms, what price.
 
 ## 0:30 Session 1: GRUDGE hires the top public score and gets burned
 ```

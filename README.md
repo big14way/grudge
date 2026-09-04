@@ -19,6 +19,8 @@ Sibyl Labs hackathon, September 2026. Base mainnet. MIT.
 9. [Getting started](#9-getting-started)
 10. [Repository layout](#10-repository-layout)
 11. [Where memory is read and written](#11-where-memory-is-read-and-written)
+12. [Audience and evidence](#12-audience-and-evidence)
+13. [Prior work declaration](#13-prior-work-declaration)
 
 ---
 
@@ -309,6 +311,18 @@ All Sibyl access lives in `memory-service/grudge_memory/store.py`. [docs/MEMORY_
 | cross-tier `search()` for dispute window and price drift | `decide` | [439](memory-service/grudge_memory/store.py#L439) |
 | redacted consortium signal | `_write_consortium_signal` | [266](memory-service/grudge_memory/store.py#L266) |
 | three-stage multi-record query | `multi_query` | [496](memory-service/grudge_memory/store.py#L496) |
+
+## 12. Audience and evidence
+
+**Who this is for.** Teams running autonomous buyer agents on Virtuals ACP: treasury, research and operations agents that hire other agents many times a day at $0.01 to $5 a job, where nobody reviews each hire and repeat failures go unnoticed. Secondary: ACP providers, who gain an honest, per-buyer signal published back to ERC-8004 instead of a farmable aggregate.
+
+**Evidence, all publicly verifiable on Base.** Ten settled or rejected ACP jobs (75652 to 76087) with an ungraduated buyer, a live third-party provider hired by offering name (job 75818, no-show recorded), two providers registered on ERC-8004 with seven feedback writes, and every transaction linked in section 7. No waitlist or design partners are claimed.
+
+## 13. Prior work declaration
+
+GRUDGE was written from scratch inside the build window, 1 to 10 September 2026, with a fresh `git init` and a real commit history. No code was reused from any earlier project by the authors or anyone else. Public documentation and specifications were read for orientation, in particular the ERC-8004 text and the Virtuals ACP and Sibyl Memory SDK sources, and no code was copied from any repository. The idea that trust between two agents is a vector rather than a universal scalar is taken from the ERC-8004 authors' own framing; the private per-counterparty trust vector, the memory-driven terms and pricing, the journal-to-entity promotion and the consortium signal are this project's own design.
+
+Dependencies: `sibyl-memory-client` 0.8.0 (MIT), `@virtuals-protocol/acp-node-v2` 0.1.12 (ISC), `viem` (MIT). ERC-8004 registries on Base by their authors.
 
 ---
 
