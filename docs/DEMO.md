@@ -1,6 +1,6 @@
 # GRUDGE demo: production script
 
-Target length 4:20. Hard limits from the rules: 2 to 5 minutes, one fresh-session
+Target length 3:00. Hard limits from the rules: 2 to 5 minutes, one fresh-session
 recall moment that is unmistakable, problem, audience, product, mechanics, Sibyl
 Memory usage, and the load-bearing moment. Recorded first, narrated second,
 assembled in Remotion.
@@ -185,62 +185,46 @@ table in section 2, then to section 11, the memory index with line links.
 
 ---
 
-## 3. Narration, word for word
+## 3. Narration, word for word (3:00 cut)
 
-Read at a normal pace, about 150 words per minute. Times are targets for the
-final cut, not for the raw captures.
+About 150 words per minute. 430 words, 2:55 of speech, 3:00 with the cards.
+Every scene from the shot list stays; the holds get shorter, not the content.
 
-### Scene 1, problem (0:00 to 0:30) over shots 1 and 2
+### Scene 1, problem (0:00 to 0:22) over shots 1 and 2
 
-> Agents are hiring other agents now. On Virtuals ACP a buyer agent picks a provider, funds an escrow, and pays, with no human in the loop. It picks by reputation. And reputation is one number.
+> Agents hire agents now. On Virtuals ACP a buyer agent picks a provider, funds escrow, and pays, with no human in the loop. It picks by reputation, and reputation is one number. This is ERC-8004 on Base: agent one, score 81, thirty-nine raters, none of them you. Here is a provider we control: score one hundred. We wrote every rating ourselves for a cent a job. The number is farmable, it is nobody's, and a buyer forgets it between sessions anyway.
+
+### Scene 2, product (0:22 to 0:32) over shot 3
+
+> GRUDGE is a buyer agent for ACP with its own private memory of every counterparty, in Sibyl Memory. Who to hire, what terms, what price: all three come from that memory and nothing else. It is built for teams running autonomous buyers that hire many times a day. Memory, empty. Watch it fill.
+
+### Scene 3, session one (0:32 to 1:10) over shot 4
+
+> Session one, two strangers. The public score says hire the first. GRUDGE agrees, on stranger terms: two stages, evaluator required, a ten percent escrow cap, a twenty-one percent premium. Read the two lines: without memory, one job at full budget; with memory, the same provider on a leash.
 >
-> This is ERC-8004 on Base. Agent one: a score of 81, thirty-nine raters. Every buyer sees the same 81. None of those raters is you.
+> Funded on Base. The delivery scores zero of five against the stored spec. Rejected, escrow refunded, retry, zero again. On the left: one journal event per job, two failures promote the provider into a warm entity, rewritten in place, status probation. A redacted signal goes to the consortium tenant. And a zero goes on chain to ERC-8004.
+
+### Scene 4, kill and cold start (1:10 to 1:45) over shots 5 and 6
+
+> Kill the broker. Empty terminal. It holds nothing.
 >
-> Here is a provider we control. Public score: one hundred. We wrote every rating ourselves, for a cent a job. The number is farmable, it is nobody's, and a buyer agent forgets it between sessions anyway. So it rehires the provider that burned it yesterday, at the same flat terms, and loses the same money again.
+> Session two, cold start, same candidates, same public scores. GRUDGE refuses the top-rated provider and names the job and the date that burned it. Public score point nine seven, ignored. It hires the second provider instead. The two lines: without memory, the burned provider at flat terms; with memory, a different provider, capped and staged. That is the decision memory changed. Five of five, settled, good rating on chain.
 
-### Scene 2, product and audience (0:30 to 0:45) over shot 3
+### Scene 5, trust (1:45 to 1:57) over shot 7
 
-> GRUDGE is a buyer agent for ACP that keeps its own private memory of every counterparty in Sibyl Memory, and trusts it over the public number. Who to hire, what terms, what price: all three come out of that memory and nothing else. It is built for teams running autonomous buyers that hire many times a day. This is the memory, empty. Watch it fill.
+> Memory is not only grudges. Three clean deliveries later the second provider is trusted: no staging, no evaluator, two retries, no premium, escrow cap up thirty-five times. Proven providers get cheaper to hire.
 
-### Scene 3, session one (0:45 to 1:40) over shot 4
+### Scene 6, deletion test (1:57 to 2:32) over shot 8
 
-> Session one. Two candidates, both strangers. The public score says hire the first one. GRUDGE agrees, but look at the terms memory sets for a stranger: staged into two jobs, evaluator required, one retry, a ten percent escrow cap, and a twenty-one percent risk premium on price. Read the two lines under the table. Without memory: single job, no evaluator, full budget. With memory: the same provider, on a leash.
->
-> The job is created and funded on Base. The delivery comes back. GRUDGE scores it against the acceptance spec stored in the reference tier: zero of five. Rejected. Escrow refunded. The retry fires. Zero of five again.
->
-> Now the memory service, on the left. One journal event per job. Two failures promote the provider from the journal into a warm entity, rewritten in place, status probation. A redacted signal goes to the consortium tenant: status and dates, no prices, no job ids. And the judgement goes public: a zero on ERC-8004, with a chain-bound commitment as the feedback hash.
+> The judges' test: delete the memory layer. Memory up, the broker refuses the burned provider. Memory stopped: it cannot rank, price, or set terms. No fallback. Exit code three. Database wiped: the grudge is gone and it hires the burner again. Stop the service and the viewer goes dark. Without memory GRUDGE is not weaker. It is nothing.
 
-### Scene 4, kill and cold start (1:40 to 2:25) over shots 5 and 6
+### Scene 7, consortium (2:32 to 2:45) over shot 9
 
-> Kill the broker. Empty terminal. The broker process holds nothing; everything it knew is in the memory service.
->
-> Session two, cold start, same candidates. Same public scores. GRUDGE refuses the top-rated provider and names the job and the date that burned it. Public score zero point nine seven: ignored. It hires the second provider instead, still on stranger terms.
->
-> The two lines again. Without memory, this broker would hire the burned provider at flat terms. With memory: a different provider, a cap, staging, an evaluator. That is the decision memory changed. The second provider delivers five out of five, the job settles, and the good rating goes on chain.
+> A second broker, separate process, separate wallet, never met the provider, private memory empty. It reads the consortium signal, two failures reported by broker A, and refuses. No private data crossed. Cold start, solved.
 
-### Scene 5, what trust buys (2:25 to 2:40) over shot 7
+### Scene 8, on chain and close (2:45 to 3:00) over shots 10 and 11
 
-> Memory does not only hold grudges. After three clean deliveries the second provider is trusted, and the next decision drops the staging, waives the evaluator, doubles the retries, removes the premium, and raises the escrow cap thirty-five times. Proven providers get cheaper and faster to hire. Strangers and burners do not.
-
-### Scene 6, deletion test (2:40 to 3:35) over shot 8
-
-> Now the test the judges run. Delete the memory layer.
->
-> Phase one, memory up: the broker refuses the burned provider. Phase two, memory service stopped: the broker cannot rank, cannot price, cannot set terms. There is no fallback formula. It exits with code three. Phase three, database wiped, service restarted on nothing: the grudge is gone, and the broker hires the provider that burned it, at stranger terms.
->
-> And the viewer: I stop the service, and the memory is gone with it. GRUDGE without memory is not a weaker product. It is no product.
-
-### Scene 7, consortium (3:35 to 3:55) over shot 9
-
-> One more broker. A separate process, its own tenant, its own wallet. It has never met the provider. Its private memory is empty. It reads the consortium signal, two live failures reported by broker A, and refuses. No private data crossed between them. Cold start, solved.
-
-### Scene 8, on chain and close (3:55 to 4:20) over shots 10 and 11
-
-> Everything you saw is on Base mainnet. The escrow funding, the rejection, the settlement, and the feedback written to ERC-8004, tagged grudge. Two partner stacks doing real work: Virtuals ACP runs the jobs, Base holds the money and the public signal.
->
-> The repo is MIT. Every memory read and write is in one file, indexed by line in the README. Delete that file's data and the broker exits. That is GRUDGE. Trust is a vector between two agents, not a number everyone shares. We built the missing half.
-
-Total: about 640 words, 4:15 at 150 words per minute.
+> All of it is on Base mainnet: the escrow, the rejection, the settlement, the feedback tagged grudge on ERC-8004. ACP runs the jobs, Base holds the money and the signal. MIT repo, every memory call indexed by line. Trust is a vector between two agents, not a number everyone shares. GRUDGE is the missing half.
 
 ---
 
@@ -251,47 +235,43 @@ Lower-third captions, one per scene, white on dark, monospace:
 | scene | caption |
 |-------|---------|
 | 1 | Public reputation is one number. Everyone sees the same one. |
-| 2 | GRUDGE: a buyer agent whose private memory decides who, what terms, what price |
+| 2 | GRUDGE: private memory decides who, what terms, what price |
 | 3 | Session 1 · stranger terms · burned twice · status: probation |
-| 4 | Session 2 · cold start · refused by job id and date · WITHOUT MEMORY vs WITH MEMORY |
-| 5 | Trust earned · single stage · no evaluator · cap x35 |
+| 4 | Session 2 · cold start · refused by job id and date |
+| 5 | Trust earned · no staging · no evaluator · cap x35 |
 | 6 | Deletion test · exit 3 · no fallback path |
 | 7 | Broker B · never met the provider · refused via consortium |
 | 8 | Base mainnet · Virtuals ACP · ERC-8004 · MIT |
 
 Title card at 0:00, 2 seconds: `GRUDGE` and under it `private memory as the hiring engine`.
-End card at 4:18: repo URL, `Sibyl Labs hackathon, September 2026`, the two
-partner names, and the commit hash of the submission.
+End card at 2:57, 3 seconds: repo URL, `Sibyl Labs hackathon, September 2026`,
+the two partner names, the submission commit hash.
 
-Highlight boxes (Remotion overlays) on these exact strings when they are on screen:
-- `WITHOUT MEMORY` and `WITH MEMORY` lines, every time.
-- `PROMOTE journal -> entity` and `REWRITTEN IN PLACE` in window A.
-- `burned us on job` in the refusal reason.
-- `Exiting with code 3.`
-- `MEMORY LAYER GONE`.
-- `consortium: 2 live failures`.
+Highlight boxes on these exact strings whenever they are on screen:
+`WITHOUT MEMORY` / `WITH MEMORY`, `PROMOTE journal -> entity`,
+`REWRITTEN IN PLACE`, `burned us on job`, `Exiting with code 3.`,
+`MEMORY LAYER GONE`, `consortium: 2 live failures`.
 
 ---
 
-## 5. Remotion assembly order
+## 5. Remotion assembly order (3:00)
 
-| # | scene | source clip | duration | notes |
-|---|-------|-------------|----------|-------|
+| # | scene | source | duration | notes |
+|---|-------|--------|----------|-------|
 | 0 | title card | none | 0:02 | |
-| 1 | problem | shots 1, 2 | 0:28 | hold on `score: 0.81, count: 39`, then on the 100 |
-| 2 | product | shot 3 | 0:15 | viewer empty, service startup line |
-| 3 | session 1 | shot 4 | 0:55 | speed up waits 4x, hold 3 s on the table, 3 s on the WITHOUT/WITH lines, 3 s on `PROMOTE` |
-| 4 | kill + session 2 | shots 5, 6 | 0:45 | shot 6 unedited from table to WITH MEMORY line |
-| 5 | trust | shot 7 | 0:15 | hold on the trusted row |
-| 6 | deletion | shot 8 | 0:55 | unedited through phase 2; speed waits elsewhere; end on MEMORY LAYER GONE |
-| 7 | consortium | shot 9 | 0:20 | hold on the consortium reason |
-| 8 | on chain + close | shots 10, 11 | 0:25 | four BaseScan holds, repo scroll |
+| 1 | problem | shots 1, 2 | 0:20 | 2 s hold on `score: 0.81, count: 39`, 2 s on the 100 |
+| 2 | product | shot 3 | 0:10 | startup line, empty viewer |
+| 3 | session 1 | shot 4 | 0:38 | ACP waits at 8x; 2 s holds on the table, the WITHOUT/WITH lines, `0/5`, `PROMOTE`, the consortium line |
+| 4 | kill + session 2 | shots 5, 6 | 0:35 | shot 5 trimmed to 3 s; shot 6 UNEDITED from the table through the WITH MEMORY line, then 8x to `5/5` |
+| 5 | trust | shot 7 | 0:12 | hold on the trusted row and the cap line |
+| 6 | deletion | shot 8 | 0:35 | phase 2 block UNEDITED; other waits 8x; end 2 s on MEMORY LAYER GONE |
+| 7 | consortium | shot 9 | 0:13 | hold on the consortium reason |
+| 8 | on chain + close | shots 10, 11 | 0:12 | 2 s per BaseScan page, 4 s repo scroll |
 | 9 | end card | none | 0:03 | |
 
-Total 4:23. Keep the OS clock visible in every captured clip. Do not overlay
-the clock. Speed changes are allowed only during ACP waits (between
-`created` and `budget.set`, between `funded` and `submitted`); never inside
-the refusal table or the deletion phase 2 block.
+Total 3:00. OS clock visible in every captured clip. Speed changes only during
+ACP waits (`created` to `budget.set`, `funded` to `submitted`). Never inside
+the refusal table, the WITHOUT/WITH lines, or deletion phase 2.
 
 ---
 
@@ -303,5 +283,5 @@ the refusal table or the deletion phase 2 block.
 - [ ] Deletion performed on camera: shot 8.
 - [ ] Both partner stacks doing real work on screen: ACP job events, giveFeedback tx.
 - [ ] Timestamp on screen: OS clock plus viewer clock.
-- [ ] 2 to 5 minutes: 4:23.
+- [ ] 2 to 5 minutes: 3:00.
 - [ ] Posted with @sibylcap, @virtuals_io, @base: docs/POSTS.md.
