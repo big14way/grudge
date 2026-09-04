@@ -35,6 +35,12 @@ Sandbox 2 = PROVIDER2 0xd82ac03a.. ERC-8004 agent 84571 (its first signer return
 Session 1 jobs 75859/75860 (burn -> probation), session 2 jobs 75865/75866 (sandbox 2 hired, 5/5), broker B jobs 75867/75868.
 Demo pool = broker/pools/demo.json. Clawpump (live third party) is in pools/mainnet.json only; it no-showed on job 75818.
 
+## Live providers (2026-09-04, rehearsal DB)
+pools/live.json: blocknuri (overcharged 0.05 on 0.02 quote -> price refusal, jobs 76166/76167 unfunded), COINGAZURA (76168/76169 settled 3/3),
+OuroBoroZ (76170/76171 rejected 1/3: OUR task mismatch). blocknuri = ERC-8004 agent 55211: two value-0 ratings revoked (idx 1,2).
+Rule now: price refusal -> action "refused", score null, charged=set budget, no giveFeedback, no retry. Journal keeps evaluated.sample.
+Rehearsal DB still shows blocknuri/OuroBoroZ on probation from those runs; the demo uses a fresh DB.
+
 ## Counterfactual (2026-09-04)
 decide() returns `counterfactual` (memoryless pick = top public score, flat terms) and logs "MEMORYLESS would hire ..."
 render.js prints WITHOUT MEMORY / WITH MEMORY lines. Session 3 (jobs 76085, 76087) promoted sandbox 2 to trusted;

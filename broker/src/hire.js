@@ -164,6 +164,7 @@ function runJob({ agent, address: buyer, adapter }, chosen, spec, stage, stages,
             case "job.submitted": {
               deliverable = ev.deliverable || session.job?.deliverable || "";
               evaluation = await memory.evaluate(a.category, deliverable);
+              evaluation.sample = String(deliverable).slice(0, 400);
               log("GRUDGE", `evaluated against REFERENCE spec:${a.category}: score ${evaluation.score} (${evaluation.criteria_met}/${evaluation.criteria_total}), unmet ${JSON.stringify(evaluation.unmet)}`);
               if (session.roles.includes("evaluator")) {
                 if (evaluation.score >= 0.5) await session.complete(`GRUDGE: spec met ${evaluation.criteria_met}/${evaluation.criteria_total}`);

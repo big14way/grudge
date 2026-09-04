@@ -331,7 +331,8 @@ class MemoryStore:
             event_id = c.write_event(
                 evaluated={"score": score, "criteria_met": evaluation.get("criteria_met"),
                            "criteria_total": evaluation.get("criteria_total"),
-                           "unmet": evaluation.get("unmet"), "notes": evaluation.get("notes")},
+                           "unmet": evaluation.get("unmet"), "notes": evaluation.get("notes"),
+                           "sample": (evaluation.get("sample") or "")[:400] or None},   # so any judgement can be audited
                 acted={"action": action, "provider": address, "why": outcome.get("reason")},
                 forward={"lesson": outcome.get("lesson") or
                          ("tighten terms for this provider" if failure else "terms can loosen for this provider"),

@@ -26,15 +26,15 @@ All Sibyl Memory access lives in one file: `memory-service/grudge_memory/store.p
 | [277](memory-service/grudge_memory/store.py#L277) | `_write_consortium_signal` | WARM | read | `sig = c.get_entity(C.CATEGORY_SIGNAL, address)["body"]` |
 | [292](memory-service/grudge_memory/store.py#L292) | `_write_consortium_signal` | WARM | write | `c.set_entity(C.CATEGORY_SIGNAL, address, sig, status=sig_status)` |
 | [331](memory-service/grudge_memory/store.py#L331) | `record_outcome` | COLD | write | `event_id = c.write_event(` |
-| [352](memory-service/grudge_memory/store.py#L352) | `record_outcome` | WARM | read | `row = c.get_entity(C.CATEGORY_COUNTERPARTY, address)` |
-| [357](memory-service/grudge_memory/store.py#L357) | `record_outcome` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
-| [370](memory-service/grudge_memory/store.py#L370) | `record_outcome` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
-| [445](memory-service/grudge_memory/store.py#L445) | `decide` | SEARCH cross-tier | read | `hits = self._use(tenant).search(address, limit=50)` |
-| [539](memory-service/grudge_memory/store.py#L539) | `snapshot` | WARM | read | `for r in c.list_entities(C.CATEGORY_COUNTERPARTY, limit=50):` |
-| [547](memory-service/grudge_memory/store.py#L547) | `snapshot` | HOT | read | `inflight = c.get_state("inflight")` |
-| [548](memory-service/grudge_memory/store.py#L548) | `snapshot` | COLD | read | `out["tenants"][tenant] = {"counterparties": rows, "events": c.read_events(limit=events),` |
-| [552](memory-service/grudge_memory/store.py#L552) | `snapshot` | WARM | read | `for r in c.list_entities(C.CATEGORY_SIGNAL, limit=50):` |
-| [578](memory-service/grudge_memory/store.py#L578) | `multi_query` | SEARCH multi-record | read | `hits = multi_record_search(self._use(tenant), query, limit=limit, diagnostics=diag)` |
+| [353](memory-service/grudge_memory/store.py#L353) | `record_outcome` | WARM | read | `row = c.get_entity(C.CATEGORY_COUNTERPARTY, address)` |
+| [358](memory-service/grudge_memory/store.py#L358) | `record_outcome` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
+| [371](memory-service/grudge_memory/store.py#L371) | `record_outcome` | WARM | write | `c.set_entity(C.CATEGORY_COUNTERPARTY, address, vec, status=status)` |
+| [446](memory-service/grudge_memory/store.py#L446) | `decide` | SEARCH cross-tier | read | `hits = self._use(tenant).search(address, limit=50)` |
+| [540](memory-service/grudge_memory/store.py#L540) | `snapshot` | WARM | read | `for r in c.list_entities(C.CATEGORY_COUNTERPARTY, limit=50):` |
+| [548](memory-service/grudge_memory/store.py#L548) | `snapshot` | HOT | read | `inflight = c.get_state("inflight")` |
+| [549](memory-service/grudge_memory/store.py#L549) | `snapshot` | COLD | read | `out["tenants"][tenant] = {"counterparties": rows, "events": c.read_events(limit=events),` |
+| [553](memory-service/grudge_memory/store.py#L553) | `snapshot` | WARM | read | `for r in c.list_entities(C.CATEGORY_SIGNAL, limit=50):` |
+| [579](memory-service/grudge_memory/store.py#L579) | `multi_query` | SEARCH multi-record | read | `hits = multi_record_search(self._use(tenant), query, limit=limit, diagnostics=diag)` |
 
 31 call sites. Brokers reach them only through HTTP (`broker/src/memory.js`).
 
