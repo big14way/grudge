@@ -1,0 +1,14 @@
+[2026-09-04 07:29:00Z] [GRUDGE] tenant broker-a agent BROKER_A chain 8453 memory http://127.0.0.1:7411
+[2026-09-04 07:29:00Z] [MEMORY] multi-record "research specfail overcharged": VerdictCode.ABSTAINED_ON, 0 admitted by Sibyl retrieve+verify, 0 exact -> nobody failed research AND overcharged
+job research budget 0.0200 USDC  decided 2026-09-04T07:29:00Z
+provider       public  status       private  premium  maxprice  cap      staged  eval  retry verdict
+0xd82a..6036   0.85    trusted      0.93     0%       0.0200    0.7125   no      no    2     HIRE
+               trusted, private 0.93, premium 0%, cap 0.7125
+0x39d0..ee6f   0.97    probation    0.33     46%      0.0109    0.1250   2x      yes   0     REFUSE
+               probation in research: burned us on job 75860 on 2026-09-03T17:19:05Z (specfail: unmet length, sources, summary, risks, structure); public score 0.97 ignored
+-> HIRE 0xd82ac03aba79b88213cec1a78832d85665526036 (trusted, private 0.93, pay <= 0.0200 USDC)
+
+   WITHOUT MEMORY: hire 0x39d0..ee6f (top public 0.97), single job, no evaluator, 0 retries, escrow 0.0200 USDC
+   memory knows this provider as probation with 2 live failures
+   WITH MEMORY:    different provider (0xd82a..6036); escrow cap 0.02 -> 0.7125, max price 0.02 -> 0.02, stages 1 -> 1, evaluator no -> no, retries 0 -> 2, dispute window 0 -> 600s
+[2026-09-04 07:29:00Z] [GRUDGE] dry run, stopping before ACP

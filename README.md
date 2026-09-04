@@ -72,6 +72,10 @@ Every decision prints the memoryless counterfactual next to it: the provider the
 
 Delete the database between any two rows and the next row collapses back to the memoryless column. That is what `scripts/deletion_test.sh` shows.
 
+![GRUDGE memory viewer after the rehearsal: sandbox 2 trusted, sandbox 1 on probation, the consortium signal, the journal, and the DECIDE log lines naming the memoryless choice](docs/media/memory-viewer.png)
+
+The decision output for session 4, verbatim, is in [docs/media/decision.txt](docs/media/decision.txt).
+
 ## 3. Architecture
 
 One Python process owns the SQLite file and serves HTTP on localhost. The Node brokers are clients of it and hold no ranking, pricing or terms logic of their own.
