@@ -551,6 +551,15 @@
       console.log('decide', d);
     } catch (e) { out.innerHTML = `<span class="reason">memory service not answering: ${e.message}</span>`; }
   };
+
+  // ?tour=1: scroll through the page on a timer (used to record the demo)
+  if (location.search.includes('tour')) {
+    const stops = [['#hero', 4000], ['#problem', 5000], ['#how', 9000], ['#sessions', 6000], ['#trust', 5000], ['#deletion', 6000], ['#chain', 4000]];
+    (async () => {
+      await new Promise((r) => setTimeout(r, 1500));
+      for (const [sel, hold] of stops) { document.querySelector(sel).scrollIntoView({ behavior: 'smooth', block: 'start' }); await new Promise((r) => setTimeout(r, hold)); }
+    })();
+  }
 </script>
 </body>
 </html>
