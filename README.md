@@ -271,7 +271,7 @@ node src/hire.js --pool pools/demo.json --budget 0.02 --feedback             # s
 GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --pool pools/demo.json --budget 0.02
 ```
 
-While the service runs, `http://127.0.0.1:7411/ui` serves a read-only viewer of the trust vectors, consortium signals, HOT state, journal and the live `[MEMORY]` log. It is served by the memory service itself, its reads bypass the memory operation counters, and it goes dark with a "MEMORY LAYER GONE" banner the moment the service stops.
+While the service runs, `http://127.0.0.1:7411/` serves a landing page (what GRUDGE is, how a hire flows through memory, a live `POST /decide` panel) and `http://127.0.0.1:7411/ui` serves a read-only viewer of the trust vectors, consortium signals, HOT state, journal and the live `[MEMORY]` log. It is served by the memory service itself, its reads bypass the memory operation counters, and it goes dark with a "MEMORY LAYER GONE" banner the moment the service stops.
 
 The demo video follows that sequence: sessions 1 and 2, the trust upgrade, the deletion test on camera and broker B, then the transactions on BaseScan.
 
