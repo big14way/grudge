@@ -61,7 +61,7 @@ BASE_RPC_URL=https://mainnet.base.org (publicnode rejects fresh receipts).
 - [x] Public repo, MIT, real commit history
 - [x] README: function, memory load-bearing location (sec 11), partner stacks (sec 6), how memory made this possible (sec 2), Prior Work declaration (sec 13, names no other project by user decision)
 - [x] Demo video 3:50 built 2026-09-05: ~/Desktop/grudge-demo.mp4 (NOT in the repo, do not commit). Sources: ~/Desktop/shot*.mov, ~/Desktop/voiceboxgenerations, build script ~/Desktop/grudge-demo/build.py
-- [ ] Two public posts tagging @sibylcap + partners: demo video + build log (drafts moved out of the repo to ~/Desktop/grudge-demo/POSTS.md)
+- [x] Demo video published: https://youtu.be/RVgEEp0Q18I (in README). Posts submitted by the user 2026-09-05.
 - [ ] Build page: team, stacks (Base, Virtuals), memory implementation note (answers drafted in chat 2026-09-03)
 - [ ] PMF evidence: only real usage claimed; design partners / waitlist would need real, verifiable artifacts
 

@@ -2,7 +2,7 @@
 
 **A buyer agent for Virtuals ACP that hires on its own private memory of every counterparty, not on the public score.**
 
-Sibyl Labs hackathon, September 2026. Base mainnet. MIT.
+Sibyl Labs hackathon, September 2026. Base mainnet. MIT. **Demo video: [youtu.be/RVgEEp0Q18I](https://youtu.be/RVgEEp0Q18I)** (3:56).
 
 ---
 
@@ -273,7 +273,7 @@ GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --pool pools/demo.json 
 
 While the service runs, `http://127.0.0.1:7411/` serves a landing page (what GRUDGE is, how a hire flows through memory, a live `POST /decide` panel) and `http://127.0.0.1:7411/ui` serves a read-only viewer of the trust vectors, consortium signals, HOT state, journal and the live `[MEMORY]` log. It is served by the memory service itself, its reads bypass the memory operation counters, and it goes dark with a "MEMORY LAYER GONE" banner the moment the service stops.
 
-The demo video follows that sequence: sessions 1 and 2, the trust upgrade, the deletion test on camera and broker B, then the transactions on BaseScan.
+The [demo video](https://youtu.be/RVgEEp0Q18I) follows that sequence: sessions 1 and 2, the trust upgrade, the deletion test on camera and broker B, then the transactions on BaseScan.
 
 ## 10. Repository layout
 
