@@ -15,6 +15,9 @@ import { createPublicClient, createWalletClient, encodeFunctionData, http, parse
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { log } from "./render.js";
+import { loadEnv } from "./env.js";
+
+loadEnv();   // module-level: IDENTITY/REPUTATION/overrides below read process.env, and `node src/erc8004.js` runs standalone
 
 export const IDENTITY = (process.env.ERC8004_IDENTITY_REGISTRY || "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432");
 export const REPUTATION = (process.env.ERC8004_REPUTATION_REGISTRY || "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63");
