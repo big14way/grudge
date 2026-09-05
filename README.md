@@ -223,6 +223,8 @@ Full rehearsal on a fresh database, 3 September 2026, two sandbox providers (age
 
 **Live third-party providers, 4 September.** Three online ACP providers hired by offering name in the `brief` category, 0.01 to 0.03 USDC each. COINGAZURA delivered twice, scored 3/3, settled (jobs 76168, 76169). blocknuri quoted 0.02 and set a 0.05 budget; memory refused on price before funding, so the quote-versus-budget gap now feeds its price-drift dimension (jobs 76166, 76167, left unfunded). OuroBoroZ delivered twice but scored 1/3 and was rejected (jobs 76170, 76171); on review that was our mismatch, a wallet-reputation offering given a market-brief task, and the evaluator did exactly what the stored spec says. Two zero ratings that an earlier version of the broker published for the undelivered blocknuri jobs were [revoked](https://basescan.org/tx/0x3c8961488c6d79865326e700cc8e2b71f9e3676ce234cfff9b437cea8ed9497e) on ERC-8004 the same hour; a price refusal is now recorded as a price observation only and never published as a judgement.
 
+**Recorded demo run, 5 September, fresh database.** Session 1 hired sandbox 1 on its public 0.97 and was burned twice, jobs [76435](https://basescan.org/tx/0x4ed555c35dec4e80a78e008cf4c7836eed4650c5c96afda747dae4a6b702f845) and [76436](https://basescan.org/tx/0x51b42e6474e0c99cf087070e65a6d098b81063e815ba2b9c8ae76ff88e6be065) (links are the two zero ratings published to ERC-8004), escrow [funded](https://basescan.org/tx/0xea14c7a6a5b94b39698d21d8aa94d64443ae8fb2dbc9707beb1fd0008abc9700) and [rejected](https://basescan.org/tx/0xc217c054fd6d88e45c3ecb7479050f2781b63b267bcfac7b7e758c0f88a8e40a) on chain, status probation. Session 2, cold start, refused sandbox 1 naming job 76436 and hired sandbox 2, jobs 76441 and 76442 settled 5/5, [feedback 100](https://basescan.org/tx/0x09df91f0956fdb8f922f5573a02b98b687a32c38ea475484d93a522a1abc954d). Session 3, jobs 76489 and 76490, promoted sandbox 2 to trusted ([feedback 100](https://basescan.org/tx/0xd92c1ac220af98c3a9ad82e1d6d090bb78393694e87846634cedf7341f5edb0a)); the next dry run shows a single stage, no evaluator, two retries, 0 % premium and an escrow cap of 0.7125. Broker B refused sandbox 1 on the consortium signal alone and hired sandbox 2, jobs 76447 and 76448. All six feedback writes came from the [feedback wallet](https://basescan.org/address/0x146FDa2361Da8192CfE857ebaE54774D3a4d532D).
+
 After session 1 the memory log shows `PROMOTE journal -> entity`, then `REWRITTEN IN PLACE ... status=trusted -> probation`, then the redacted consortium signal. Session 2, started cold, refuses with `burned us on job 75667 on 2026-09-02T22:55:09Z; public score 0.97 ignored`. Broker B, a separate process that never met the provider, refuses on the consortium signal alone.
 
 ## 8. The deletion test
@@ -271,7 +273,7 @@ GRUDGE_TENANT=broker-b node src/hire.js --agent BROKER_B --pool pools/demo.json 
 
 While the service runs, `http://127.0.0.1:7411/ui` serves a read-only viewer of the trust vectors, consortium signals, HOT state, journal and the live `[MEMORY]` log. It is served by the memory service itself, its reads bypass the memory operation counters, and it goes dark with a "MEMORY LAYER GONE" banner the moment the service stops.
 
-Demo script with timings: [docs/DEMO.md](docs/DEMO.md).
+The demo video follows that sequence: sessions 1 and 2, the trust upgrade, the deletion test on camera and broker B, then the transactions on BaseScan.
 
 ## 10. Repository layout
 
@@ -300,7 +302,6 @@ scripts/
 docs/
   TRUST_VECTOR.md   schema and constants
   MEMORY_INDEX.md   every memory call with a line link
-  DEMO.md           demo script
 ```
 
 ## 11. Where memory is read and written
@@ -322,7 +323,7 @@ All Sibyl access lives in `memory-service/grudge_memory/store.py`. [docs/MEMORY_
 
 **Who this is for.** Teams running autonomous buyer agents on Virtuals ACP: treasury, research and operations agents that hire other agents many times a day at $0.01 to $5 a job, where nobody reviews each hire and repeat failures go unnoticed. Secondary: ACP providers, who gain an honest, per-buyer signal published back to ERC-8004 instead of a farmable aggregate.
 
-**Evidence, all publicly verifiable on Base.** Sixteen ACP jobs (75652 to 76171) including three live third-party providers with an ungraduated buyer, a live third-party provider hired by offering name (job 75818, no-show recorded), two providers registered on ERC-8004 with seven feedback writes, and every transaction linked in section 7. Pilot interest is collected in public on [issue #1](https://github.com/big14way/grudge/issues/1); integration is three HTTP calls, see [docs/PILOT.md](docs/PILOT.md). Only what appears in that thread is claimed.
+**Evidence, all publicly verifiable on Base.** Twenty-four ACP jobs (75652 to 76490) including three live third-party providers with an ungraduated buyer, a live third-party provider hired by offering name (job 75818, no-show recorded), two providers registered on ERC-8004 with thirteen feedback writes, and every transaction linked in section 7. Pilot interest is collected in public on [issue #1](https://github.com/big14way/grudge/issues/1); integration is three HTTP calls, see [docs/PILOT.md](docs/PILOT.md). Only what appears in that thread is claimed.
 
 ## 13. Prior work declaration
 

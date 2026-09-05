@@ -46,6 +46,11 @@ decide() returns `counterfactual` (memoryless pick = top public score, flat term
 render.js prints WITHOUT MEMORY / WITH MEMORY lines. Session 3 (jobs 76085, 76087) promoted sandbox 2 to trusted;
 dry-run then shows single stage, no evaluator, retries 2, cap 0.7125. README section 2 has the session table.
 
+## Demo recorded 2026-09-05 (grudge-demo.db, still running on 7411 with both sandbox providers)
+Session 1 jobs 76435/76436 (burned, probation), session 2 jobs 76441/76442 (sandbox 2 hired 5/5), session 3 jobs 76489/76490 (sandbox 2 TRUSTED),
+broker B jobs 76447/76448 (refused sandbox 1 on consortium, hired sandbox 2). Six giveFeedback txs from the feedback EOA. README section 7 has the links.
+erc8004.js now loads .env standalone (the score command returned agentId null before that fix).
+
 ## Demo state
 ~/.sibyl-memory/grudge.db holds real memory: provider 0x39d04d78 is BLACKLISTED (3 live failures: jobs 75666, 75667, 75668) until ~2026-10-02.
 Refund observation verified live on job 75668 (refund_behavior -> 1.0).
@@ -55,13 +60,13 @@ BASE_RPC_URL=https://mainnet.base.org (publicnode rejects fresh receipts).
 ## Submission checklist (rules at hack.sibyllabs.org/rules, deadline Sep 10 23:59 UTC)
 - [x] Public repo, MIT, real commit history
 - [x] README: function, memory load-bearing location (sec 11), partner stacks (sec 6), how memory made this possible (sec 2), Prior Work declaration (sec 13, names no other project by user decision)
-- [ ] Demo video 2-5 min: problem, AUDIENCE, product, mechanics, Sibyl usage, fresh-session recall (docs/DEMO.md)
-- [ ] Two public posts tagging @sibylcap + partners: demo video + build log (drafts in docs/POSTS.md)
+- [x] Demo video 3:50 built 2026-09-05: ~/Desktop/grudge-demo.mp4 (NOT in the repo, do not commit). Sources: ~/Desktop/shot*.mov, ~/Desktop/voiceboxgenerations, build script ~/Desktop/grudge-demo/build.py
+- [ ] Two public posts tagging @sibylcap + partners: demo video + build log (drafts moved out of the repo to ~/Desktop/grudge-demo/POSTS.md)
 - [ ] Build page: team, stacks (Base, Virtuals), memory implementation note (answers drafted in chat 2026-09-03)
 - [ ] PMF evidence: only real usage claimed; design partners / waitlist would need real, verifiable artifacts
 
 ## Next
-- docs/DEMO.md recording. Optional: hire a live third-party provider via --browse for the "hire real providers where possible" line.
+- Landing page for the memory service UI (requested 2026-09-05): served at /, motion design, how it works, repo link; /ui stays the viewer.
 - Keep README key-site line numbers in sync with store.py (scripts/memory_index.py).
 
 ## Previously blocked (resolved 2026-09-02)
@@ -70,7 +75,7 @@ Three Virtuals ACP wallets (broker A, broker B, sandbox provider) in broker/.env
    If create+fund fails for an ungraduated buyer, use only our sandbox provider (node src/provider.js).
 2. Register the sandbox provider on the Service Registry with offering "GRUDGE Research Brief" at 0.01 USDC.
 3. First settled job on Sepolia, then mainnet with $0.01 and --feedback for the giveFeedback tx.
-4. Record docs/DEMO.md.
+4. Record the demo (done 2026-09-05).
 
 ## Toolchain
 - Python: `.venv` (3.12 via uv). `uv pip install --python .venv/bin/python -r memory-service/requirements.txt`
@@ -95,7 +100,7 @@ Three Virtuals ACP wallets (broker A, broker B, sandbox provider) in broker/.env
 - [x] 5. ERC-8004: provider registered as agent 84165 (identity EOA in .env). giveFeedback sent 4x from FEEDBACK EOA. See README live table.
 - [x] 6. thin UI: broker/src/render.js (terminal) + memory-service/grudge_memory/ui.html served at /ui by the memory service
       (GET /snapshot, GET /log?after=N; viewer reads bypass _mem so they never count or trigger decay). Screenshot verified via headless Brave.
-- [x] README (problem lives IN the README, no separate problem doc), docs/MEMORY_INDEX.md (regenerate with scripts/memory_index.py after editing store.py; README key-site line numbers must be refreshed too), docs/DEMO.md.
+- [x] README (problem lives IN the README, no separate problem doc), docs/MEMORY_INDEX.md (regenerate with scripts/memory_index.py after editing store.py; README key-site line numbers must be refreshed too). docs/DEMO.md and docs/POSTS.md were removed from the repo on 2026-09-05 (archived on the Desktop).
 - NO prior-work declaration anywhere (removed by user 2026-09-03). Do not cite any other project in the repo.
 
 ## Decisions locked (docs/TRUST_VECTOR.md bottom)
