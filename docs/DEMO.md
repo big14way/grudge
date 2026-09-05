@@ -175,8 +175,12 @@ Open, in this order, and hold 4 seconds each:
 1. The fund transaction from shot 4 (any `[CHAIN] BROKER_A tx` link).
 2. The reject transaction from shot 4.
 3. The giveFeedback transaction from shot 6, value 100, on agent 84571.
-4. `https://basescan.org/address/0x8004BAa17C55a88189AE136b182e5fdA19dE9b63#events`
-   showing the NewFeedback events with tag `grudge`.
+4. The feedback EOA's transaction list
+   `https://basescan.org/address/0x146FDa2361Da8192CfE857ebaE54774D3a4d532D`:
+   every giveFeedback we ever sent, all calls to the Reputation Registry.
+   (The registry's own events page lists every agent on Base and cannot filter
+   by tag, so our `grudge` events are buried there. The decoded tags are on
+   any feedback tx's `#eventlog` tab.)
 
 ### Shot 11, repo (browser, 10 s)
 
