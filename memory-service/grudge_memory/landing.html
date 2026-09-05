@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GRUDGE · private memory as the hiring engine</title>
+<meta name="description" content="A buyer agent for Virtuals ACP that hires on its own private memory of every counterparty, not on the public score. Built on Sibyl Memory, live on Base.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0b0e11; --bg2:#0f1318; --panel:#12161b; --line:#1f262e; --line2:#2a333d;
+    --fg:#e6ebf0; --dim:#8b96a2; --dim2:#5f6b78;
+    --acc:#58a6ff; --acc2:#8b5cf6; --ok:#3fb950; --warn:#d29922; --bad:#f85149;
+    --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 var(--sans); -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+  a { color:var(--acc); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  code, .mono { font-family:var(--mono); }
+  .wrap { max-width:1180px; margin:0 auto; padding:0 28px; }
+  section { padding:112px 0; position:relative; }
+  h1, h2, h3 { margin:0; letter-spacing:-.02em; line-height:1.1; }
+  h2 { font-size:clamp(30px, 4vw, 44px); font-weight:800; }
+  h3 { font-size:20px; font-weight:700; }
+  .eyebrow { font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--acc); margin-bottom:18px; display:flex; align-items:center; gap:10px; }
+  .eyebrow::before { content:""; width:22px; height:1px; background:var(--acc); }
+  .lead { color:var(--dim); font-size:19px; max-width:720px; margin-top:18px; }
+  .grid { display:grid; gap:18px; }
+  .g2 { grid-template-columns:repeat(2, 1fr); } .g3 { grid-template-columns:repeat(3, 1fr); } .g4 { grid-template-columns:repeat(4, 1fr); }
+  @media (max-width: 900px) { .g2, .g3, .g4 { grid-template-columns:1fr; } section { padding:80px 0; } }
+  .card { background:linear-gradient(180deg, var(--panel), var(--bg2)); border:1px solid var(--line); border-radius:14px; padding:24px; position:relative; overflow:hidden; transition:transform .35s ease, border-color .35s ease; }
+  .card:hover { transform:translateY(-3px); border-color:var(--line2); }
+  .card h3 { margin-bottom:10px; }
+  .card p { margin:0; color:var(--dim); font-size:15px; }
+  .card .k { font-family:var(--mono); font-size:12px; color:var(--acc); letter-spacing:.12em; text-transform:uppercase; margin-bottom:14px; }
+  .btn { display:inline-flex; align-items:center; gap:10px; padding:13px 22px; border-radius:10px; font-weight:600; font-size:15px; border:1px solid var(--line2); background:var(--panel); color:var(--fg); transition:transform .25s ease, background .25s ease, border-color .25s ease; }
+  .btn:hover { text-decoration:none; transform:translateY(-2px); border-color:var(--acc); }
+  .btn.primary { background:linear-gradient(135deg, var(--acc), var(--acc2)); border-color:transparent; color:#fff; box-shadow:0 10px 40px -10px rgba(88,166,255,.6); }
+  .btn svg { width:18px; height:18px; }
+  .pill { display:inline-block; font-family:var(--mono); font-size:12px; padding:3px 9px; border-radius:999px; border:1px solid var(--line2); color:var(--dim); }
+  .status { font-family:var(--mono); font-size:12px; padding:2px 8px; border-radius:4px; font-weight:600; }
+  .trusted { background:#123d1f; color:var(--ok); } .probation { background:#3d2e0c; color:var(--warn); } .blacklisted { background:#4a1414; color:var(--bad); } .unknown { background:#1c232b; color:var(--dim); }
+
+  /* reveal on scroll */
+  .rv { opacity:0; transform:translateY(22px); transition:opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1); }
+  .rv.in { opacity:1; transform:none; }
+  .rv.d1 { transition-delay:.08s } .rv.d2 { transition-delay:.16s } .rv.d3 { transition-delay:.24s } .rv.d4 { transition-delay:.32s }
+
+  /* nav */
+  nav { position:fixed; top:0; left:0; right:0; z-index:20; backdrop-filter:blur(14px); background:rgba(11,14,17,.65); border-bottom:1px solid rgba(31,38,46,.7); }
+  nav .wrap { display:flex; align-items:center; justify-content:space-between; height:62px; }
+  nav .brand { font-family:var(--mono); font-weight:600; letter-spacing:.2em; font-size:14px; color:var(--fg); display:flex; align-items:center; gap:10px; }
+  nav .brand i { width:9px; height:9px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 0 rgba(63,185,80,.6); animation:pulse 2.2s infinite; }
+  @keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(63,185,80,.55) } 70% { box-shadow:0 0 0 9px rgba(63,185,80,0) } 100% { box-shadow:0 0 0 0 rgba(63,185,80,0) } }
+  nav .links { display:flex; gap:26px; font-size:14px; color:var(--dim); }
+  nav .links a { color:var(--dim); } nav .links a:hover { color:var(--fg); text-decoration:none; }
+  @media (max-width: 760px) { nav .links { display:none; } }
+
+  /* hero */
+  #hero { min-height:min(100vh, 920px); display:flex; align-items:center; padding:140px 0 80px; overflow:hidden; }
+  #hero canvas { position:absolute; inset:0; width:100%; height:100%; z-index:0; }
+  #hero .wrap { position:relative; z-index:1; }
+  #hero h1 { font-size:clamp(56px, 9vw, 124px); font-weight:800; letter-spacing:-.04em; line-height:.95; background:linear-gradient(180deg, #fff 30%, #9fb3c8); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  #hero .tag { font-family:var(--mono); color:var(--acc); letter-spacing:.2em; text-transform:uppercase; font-size:13px; margin-bottom:26px; }
+  #hero .sub { font-size:clamp(20px, 2.4vw, 28px); color:var(--fg); max-width:780px; margin-top:26px; font-weight:500; line-height:1.35; }
+  #hero .sub b { color:var(--acc); }
+  #hero .cta { display:flex; gap:14px; margin-top:38px; flex-wrap:wrap; }
+  .stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-top:64px; max-width:900px; }
+  .stats div { background:var(--bg); padding:18px 22px; }
+  .stats b { display:block; font-size:30px; font-weight:800; letter-spacing:-.03em; font-family:var(--mono); }
+  .stats span { color:var(--dim); font-size:13px; }
+  @media (max-width: 760px) { .stats { grid-template-columns:repeat(2, 1fr); } }
+  .live { display:inline-flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; color:var(--ok); }
+  .live i { width:7px; height:7px; border-radius:50%; background:var(--ok); animation:pulse 2.2s infinite; }
+  .live.off { color:var(--bad); } .live.off i { background:var(--bad); animation:none; }
+
+  /* problem */
+  .num { font-family:var(--mono); font-size:64px; font-weight:600; letter-spacing:-.04em; line-height:1; background:linear-gradient(135deg, var(--acc), var(--acc2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .farm { display:flex; gap:28px; align-items:center; padding:28px; border-radius:14px; border:1px solid var(--line); background:var(--panel); margin-top:26px; flex-wrap:wrap; }
+  .farm .score { font-family:var(--mono); font-size:54px; font-weight:600; color:var(--ok); line-height:1; }
+  .farm p { margin:0; color:var(--dim); flex:1; min-width:260px; }
+
+  /* flow */
+  .flow { margin-top:44px; border:1px solid var(--line); border-radius:16px; background:radial-gradient(1200px 400px at 50% -10%, rgba(88,166,255,.08), transparent 60%), var(--bg2); padding:24px; overflow:hidden; }
+  .flow svg { width:100%; height:auto; display:block; }
+  .flow .node rect { fill:var(--panel); stroke:var(--line2); stroke-width:1; rx:10; transition:stroke .3s, filter .3s; }
+  .flow .node text { fill:var(--fg); font-family:var(--sans); font-weight:600; font-size:15px; }
+  .flow .node .sub { fill:var(--dim); font-size:11.5px; font-family:var(--mono); font-weight:400; }
+  .flow .node.on rect { stroke:var(--acc); filter:drop-shadow(0 0 14px rgba(88,166,255,.45)); }
+  .flow .edge { fill:none; stroke:var(--line2); stroke-width:1.5; }
+  .flow .edge.on { stroke:var(--acc); stroke-dasharray:6 6; animation:dash 1s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset:-24; } }
+  .flow .dot { fill:var(--acc); filter:drop-shadow(0 0 8px var(--acc)); }
+  .flow .lbl { fill:var(--dim); font-family:var(--mono); font-size:11px; }
+  .steps { display:grid; grid-template-columns:repeat(6, 1fr); gap:10px; margin-top:22px; }
+  @media (max-width: 900px) { .steps { grid-template-columns:repeat(2, 1fr); } }
+  .step { border:1px solid var(--line); border-radius:12px; padding:14px 14px 12px; background:var(--panel); cursor:pointer; transition:border-color .3s, background .3s; }
+  .step.on { border-color:var(--acc); background:linear-gradient(180deg, rgba(88,166,255,.10), var(--panel)); }
+  .step b { font-family:var(--mono); font-size:11px; color:var(--acc); letter-spacing:.12em; display:block; margin-bottom:6px; }
+  .step h4 { margin:0 0 6px; font-size:14px; }
+  .step p { margin:0; color:var(--dim); font-size:12.5px; line-height:1.45; }
+  .step .bar { height:2px; background:var(--line); margin-top:10px; border-radius:2px; overflow:hidden; }
+  .step .bar i { display:block; height:100%; width:0; background:var(--acc); }
+  .step.on .bar i { animation:fill var(--step-ms, 3200ms) linear forwards; }
+  @keyframes fill { to { width:100%; } }
+
+  /* sessions */
+  .sess { margin-top:36px; border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+  .sess .row { display:grid; grid-template-columns:150px 1fr 1fr; border-bottom:1px solid var(--line); }
+  .sess .row:last-child { border-bottom:0; }
+  .sess .row > div { padding:20px 22px; }
+  .sess .h { background:var(--panel); font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
+  .sess .s { font-family:var(--mono); font-size:13px; color:var(--dim); border-right:1px solid var(--line); }
+  .sess .s b { display:block; color:var(--fg); font-size:15px; margin-bottom:6px; }
+  .sess .no { border-right:1px solid var(--line); color:var(--dim); font-size:14px; }
+  .sess .yes { font-size:14px; }
+  .sess .yes b { color:var(--fg); }
+  .sess .h.no, .sess .h.yes { color:var(--dim); }
+  .sess .h.yes { color:var(--acc); }
+  @media (max-width: 900px) { .sess .row { grid-template-columns:1fr; } .sess .s, .sess .no { border-right:0; border-bottom:1px solid var(--line); } }
+
+  /* trust vector */
+  .tv { display:grid; grid-template-columns:1.2fr 1fr; gap:22px; margin-top:36px; }
+  @media (max-width: 900px) { .tv { grid-template-columns:1fr; } }
+  .dim { display:grid; grid-template-columns:170px 1fr 56px; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid var(--line); font-family:var(--mono); font-size:13px; }
+  .dim:last-child { border-bottom:0; }
+  .dim .t { height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
+  .dim .t i { display:block; height:100%; width:0; border-radius:4px; background:linear-gradient(90deg, var(--acc), var(--acc2)); transition:width 1.4s cubic-bezier(.2,.8,.2,1); }
+  .dim .v { text-align:right; color:var(--dim); }
+  .ladder { display:flex; flex-direction:column; gap:10px; }
+  .rung { display:grid; grid-template-columns:110px 1fr; gap:14px; align-items:center; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--panel); font-size:13.5px; color:var(--dim); }
+  .terms { font-family:var(--mono); font-size:13px; margin-top:16px; color:var(--dim); }
+  .terms b { color:var(--fg); }
+  .formula { font-family:var(--mono); font-size:13px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-top:18px; color:var(--dim); overflow:auto; }
+  .formula b { color:var(--acc); font-weight:500; }
+
+  /* terminal */
+  .term { background:#070a0d; border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-top:30px; }
+  .term .bar3 { display:flex; gap:7px; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--panel); }
+  .term .bar3 i { width:11px; height:11px; border-radius:50%; background:#2a333d; }
+  .term .bar3 i:nth-child(1) { background:#ff5f57; } .term .bar3 i:nth-child(2) { background:#febc2e; } .term .bar3 i:nth-child(3) { background:#28c840; }
+  .term pre { margin:0; padding:18px 20px; font-family:var(--mono); font-size:13px; line-height:1.55; color:#c9d1d9; min-height:250px; white-space:pre-wrap; }
+  .term .ok { color:var(--ok); } .term .bad { color:var(--bad); font-weight:600; } .term .warn { color:var(--warn); } .term .dimc { color:var(--dim2); } .term .hi { background:rgba(210,153,34,.18); }
+  .caret { display:inline-block; width:8px; height:15px; background:var(--fg); vertical-align:-2px; animation:blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0 } }
+  .phases { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-top:18px; }
+  @media (max-width: 900px) { .phases { grid-template-columns:1fr; } }
+  .phase { border:1px solid var(--line); border-radius:12px; padding:16px; background:var(--panel); font-size:14px; color:var(--dim); }
+  .phase b { display:block; color:var(--fg); font-family:var(--mono); font-size:12px; letter-spacing:.12em; margin-bottom:6px; }
+  .phase.on { border-color:var(--warn); }
+
+  /* evidence */
+  .tx { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; padding:14px 16px; border:1px solid var(--line); border-radius:10px; background:var(--panel); font-size:14px; }
+  .tx + .tx { margin-top:10px; }
+  .tx code { color:var(--dim); font-size:12px; }
+  .tx a.btn { padding:8px 12px; font-size:13px; }
+  .partners { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-top:26px; }
+  @media (max-width: 900px) { .partners { grid-template-columns:repeat(2, 1fr); } }
+  .partner { border:1px solid var(--line); border-radius:12px; padding:18px; background:var(--panel); }
+  .partner b { display:block; font-size:16px; margin-bottom:4px; }
+  .partner span { color:var(--dim); font-size:13px; }
+
+  /* try */
+  .try { display:grid; grid-template-columns:380px 1fr; gap:22px; margin-top:36px; }
+  @media (max-width: 900px) { .try { grid-template-columns:1fr; } }
+  .form { border:1px solid var(--line); border-radius:14px; padding:20px; background:var(--panel); }
+  .form label { display:block; font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); margin:14px 0 6px; }
+  .form label:first-child { margin-top:0; }
+  .form select, .form input { width:100%; background:var(--bg); color:var(--fg); border:1px solid var(--line2); border-radius:8px; padding:10px 12px; font:14px var(--mono); }
+  .form .cand { display:grid; grid-template-columns:1fr 70px 70px; gap:8px; margin-top:8px; }
+  .form .cand input { padding:8px 10px; font-size:12.5px; }
+  .form .note { font-size:12.5px; color:var(--dim2); margin-top:14px; line-height:1.5; }
+  .out { border:1px solid var(--line); border-radius:14px; background:#070a0d; padding:18px 20px; font-family:var(--mono); font-size:13px; min-height:320px; overflow:auto; white-space:pre-wrap; color:#c9d1d9; }
+  .out .cf { margin-top:14px; padding-top:14px; border-top:1px dashed var(--line2); }
+  .out .cf b { color:var(--acc); }
+  .out .reason { color:var(--warn); }
+  .out table { border-collapse:collapse; width:100%; } .out th, .out td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); font-weight:400; } .out th { color:var(--dim); }
+
+  footer { border-top:1px solid var(--line); padding:44px 0; color:var(--dim); font-size:14px; }
+  footer .wrap { display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:center; }
+  .marquee { overflow:hidden; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--panel); padding:14px 0; }
+  .marquee div { display:flex; gap:56px; white-space:nowrap; font-family:var(--mono); font-size:12.5px; color:var(--dim); animation:scroll 38s linear infinite; width:max-content; }
+  @keyframes scroll { to { transform:translateX(-50%); } }
+  .marquee span b { color:var(--fg); font-weight:500; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#hero"><i></i>GRUDGE</a>
+    <div class="links">
+      <a href="#problem">Problem</a><a href="#how">How it works</a><a href="#sessions">Memory in action</a><a href="#trust">Trust vector</a><a href="#deletion">Deletion test</a><a href="#chain">On chain</a><a href="#try">Try it</a>
+    </div>
+    <div style="display:flex; gap:10px">
+      <a class="btn" href="/ui" style="padding:8px 14px; font-size:13px">Live memory viewer</a>
+      <a class="btn" href="https://github.com/big14way/grudge" target="_blank" rel="noopener" style="padding:8px 14px; font-size:13px">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<section id="hero">
+  <canvas id="field"></canvas>
+  <div class="wrap">
+    <div class="tag rv">Sibyl Labs hackathon · Virtuals ACP · Base mainnet</div>
+    <h1 class="rv d1">GRUDGE</h1>
+    <p class="sub rv d2">A buyer agent for Virtuals ACP that hires on its <b>own private memory</b> of every counterparty, not on the public score. <b>Who</b> to hire, <b>what terms</b>, <b>what price</b>: all three come from memory. Without it, the broker exits.</p>
+    <div class="cta rv d3">
+      <a class="btn primary" href="/ui">Open the live memory viewer
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+      <a class="btn" href="https://github.com/big14way/grudge" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.9 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/></svg>
+        Source on GitHub</a>
+      <a class="btn" href="#how">How it works</a>
+    </div>
+    <div class="stats rv d4">
+      <div><b id="st-reads">–</b><span>memory reads this session</span></div>
+      <div><b id="st-writes">–</b><span>memory writes this session</span></div>
+      <div><b id="st-cp">–</b><span>counterparties remembered</span></div>
+      <div><b id="st-sig">–</b><span>consortium signals</span></div>
+    </div>
+    <div style="margin-top:14px"><span class="live" id="live"><i></i>memory service · connecting</span></div>
+  </div>
+</section>
+
+<div class="marquee"><div id="mq"></div></div>
+
+<section id="problem">
+  <div class="wrap">
+    <div class="eyebrow rv">The problem</div>
+    <h2 class="rv d1">Public reputation is one number.<br>Everyone sees the same one.</h2>
+    <p class="lead rv d2">On Virtuals ACP a buyer agent picks a provider, funds escrow and pays with no human in the loop. It picks by reputation, and reputation is a single public aggregate. That input fails a buyer in four ways, each reproduced while building this.</p>
+    <div class="grid g4" style="margin-top:44px">
+      <div class="card rv"><div class="k">01</div><h3>It is everyone's, so it is nobody's</h3><p>Your own outcome with a provider moves its score by one vote among hundreds. Our test provider missed the spec three times in a row; its public standing never moved.</p></div>
+      <div class="card rv d1"><div class="k">02</div><h3>It is farmable</h3><p>Feedback costs one cheap job. A sock puppet is indistinguishable from a customer. The deployed ERC-8004 <code>getSummary</code> reverts unless you name whose feedback to trust.</p></div>
+      <div class="card rv d2"><div class="k">03</div><h3>It is one dimension</h3><p>"Great at research, bad at writing, overcharges, fights refunds" collapses into a single number. Terms cannot be set from that.</p></div>
+      <div class="card rv d3"><div class="k">04</div><h3>The buyer forgets</h3><p>Agents restart stateless. Even a bad experience is gone next session, so the same provider is rehired at flat terms.</p></div>
+    </div>
+    <div class="farm rv">
+      <div class="score" id="farm">100</div>
+      <p><b style="color:var(--fg)">Public score of a provider we control</b>, written by ourselves on ERC-8004 with two $0.01 jobs from a wallet we own. Agent 84571 on Base. At a cent a job no alarm fires; at scale an autonomous buyer bleeds on repeat failures.</p>
+      <a class="btn" href="https://basescan.org/address/0x146FDa2361Da8192CfE857ebaE54774D3a4d532D" target="_blank" rel="noopener">The ratings, on BaseScan</a>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="eyebrow rv">How it works</div>
+    <h2 class="rv d1">One hire, end to end.<br>Memory sits between the broker and the chain.</h2>
+    <p class="lead rv d2">A Python memory service is the only writer of the Sibyl Memory store. Node brokers are HTTP clients of it and hold no ranking, pricing or terms logic of their own. Every hire is a loop through memory, Virtuals ACP and Base.</p>
+    <div class="flow rv d3">
+      <svg viewBox="0 0 1120 330" id="flowsvg" aria-label="GRUDGE flow diagram">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5 0 10z" fill="#2a333d"/></marker>
+        </defs>
+        <!-- edges -->
+        <path id="e1" class="edge" d="M240 95 C 300 95, 330 95, 378 95" marker-end="url(#arr)"/>
+        <path id="e2" class="edge" d="M620 95 C 680 95, 700 95, 758 95" marker-end="url(#arr)"/>
+        <path id="e3" class="edge" d="M860 130 C 860 170, 860 190, 860 218" marker-end="url(#arr)"/>
+        <path id="e4" class="edge" d="M760 255 C 650 255, 500 255, 382 255" marker-end="url(#arr)"/>
+        <path id="e5" class="edge" d="M500 130 C 500 150, 500 150, 500 163" marker-end="url(#arr)"/>
+        <path id="e6" class="edge" d="M120 220 C 120 190, 100 175, 100 132" marker-end="url(#arr)"/>
+        <path id="e7" class="edge" d="M300 220 C 300 175, 400 175, 430 132" marker-end="url(#arr)"/>
+        <!-- nodes -->
+        <g class="node" id="n-broker"><rect x="20" y="60" width="220" height="70"/><text x="40" y="90">Broker (Node)</text><text class="sub" x="40" y="112">hire.js · HTTP client of memory</text></g>
+        <g class="node" id="n-mem"><rect x="380" y="60" width="240" height="70"/><text x="400" y="90">Memory service (Python)</text><text class="sub" x="400" y="112">only writer · /decide /outcome</text></g>
+        <g class="node" id="n-sibyl"><rect x="380" y="165" width="240" height="70"/><text x="400" y="195">Sibyl Memory (SQLite)</text><text class="sub" x="400" y="217">journal → entity → consortium</text></g>
+        <g class="node" id="n-acp"><rect x="760" y="60" width="200" height="70"/><text x="780" y="90">Virtuals ACP</text><text class="sub" x="780" y="112">create · fund · deliver</text></g>
+        <g class="node" id="n-base"><rect x="760" y="220" width="200" height="70"/><text x="780" y="250">Base mainnet</text><text class="sub" x="780" y="272">escrow · ERC-8004 feedback</text></g>
+        <g class="node" id="n-eval"><rect x="20" y="220" width="360" height="70"/><text x="40" y="250">Evaluator + outcome</text><text class="sub" x="40" y="272">score vs REFERENCE spec · release / reject</text></g>
+        <text class="lbl" x="255" y="82">candidates</text>
+        <text class="lbl" x="655" y="82">terms · price</text>
+        <text class="lbl" x="872" y="180">escrow</text>
+        <text class="lbl" x="540" y="275">deliverable · refund</text>
+        <text class="lbl" x="500" y="150" text-anchor="start" dx="10">vector</text>
+        <text class="lbl" x="30" y="180">release / reject</text>
+        <text class="lbl" x="318" y="172">outcome</text>
+        <circle class="dot" id="dot" r="5" cx="240" cy="95"/>
+      </svg>
+      <div class="steps" id="steps">
+        <div class="step on"><b>01 decide</b><h4>Rank from memory</h4><p>Private score, live failures in this category and the consortium signal decide who is hirable. Public score is a tie-break, never the answer.</p><div class="bar"><i></i></div></div>
+        <div class="step"><b>02 terms</b><h4>Status sets the leash</h4><p>Unknown: staged 2x, evaluator required, one retry, 10 % escrow cap. Trusted: single stage, no evaluator, two retries, cap up 35x.</p><div class="bar"><i></i></div></div>
+        <div class="step"><b>03 hire</b><h4>Create and fund on ACP</h4><p>Job created by offering name or raw requirement, funded up to the memory-set max price. Every transaction lands on Base.</p><div class="bar"><i></i></div></div>
+        <div class="step"><b>04 evaluate</b><h4>Score against the stored spec</h4><p>The REFERENCE tier holds the acceptance criteria. 5/5 releases escrow, a miss rejects and observes the refund.</p><div class="bar"><i></i></div></div>
+        <div class="step"><b>05 remember</b><h4>Journal, promote, signal</h4><p>One journal event per job. Three samples or two failures promote a warm entity, rewritten in place. A redacted signal goes to the consortium.</p><div class="bar"><i></i></div></div>
+        <div class="step"><b>06 publish</b><h4>One honest vote on ERC-8004</h4><p>The evaluator score goes back on chain with a chain-bound commitment hash, so the public number gains one verifiable opinion.</p><div class="bar"><i></i></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sessions">
+  <div class="wrap">
+    <div class="eyebrow rv">Memory in action</div>
+    <h2 class="rv d1">Every decision prints its memoryless twin.</h2>
+    <p class="lead rv d2">Same candidates, same public scores. The left column is what a broker without memory would do. The right column is what GRUDGE did, live on Base, fresh database at session 1.</p>
+    <div class="sess rv d3">
+      <div class="row"><div class="h">session</div><div class="h no">without memory</div><div class="h yes">with memory</div></div>
+      <div class="row rv"><div class="s"><b>1 · two strangers</b>memory empty</div><div class="no">Hire sandbox 1 on its public 0.97. One job, no evaluator, full budget.</div><div class="yes"><b>Same provider, on a leash.</b> Staged 2x, evaluator required, 1 retry, 10 % escrow cap, 21 % premium.</div></div>
+      <div class="row rv"><div class="s"><b>1 · outcome</b>0/5 twice</div><div class="no">Pay for a delivery that missed the spec.</div><div class="yes"><b>Rejected both stages, escrow refunded.</b> Two failures inside one staged job promote the provider straight to <span class="status probation">probation</span>.</div></div>
+      <div class="row rv"><div class="s"><b>2 · cold start</b>broker restarted</div><div class="no">Hire sandbox 1 again, flat terms. The burn is forgotten.</div><div class="yes"><b>Refused sandbox 1</b>, naming the job id and date that burned it. Public 0.97 ignored. Hired sandbox 2 on probe terms, 5/5, settled.</div></div>
+      <div class="row rv"><div class="s"><b>3 · trust earned</b>three clean samples</div><div class="no">Hire sandbox 1 again.</div><div class="yes"><b>Sandbox 2 is <span class="status trusted">trusted</span>.</b> Single stage, no evaluator, two retries, 0 % premium, escrow cap 0.02 → 0.7125.</div></div>
+      <div class="row rv"><div class="s"><b>broker B</b>never met either</div><div class="no">Hire sandbox 1.</div><div class="yes"><b>Refused sandbox 1 on the consortium signal alone</b>: two failures reported by broker A, no private data crossed. Cold start, solved.</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="trust">
+  <div class="wrap">
+    <div class="eyebrow rv">Trust vector</div>
+    <h2 class="rv d1">Trust is a vector between two agents,<br>not a number everyone shares.</h2>
+    <p class="lead rv d2">Four behaviours are tracked per counterparty and per category, learned only from jobs this buyer ran, smoothed with an EWMA and decayed with a 14-day half-life. Status follows from the vector; terms and price follow from status.</p>
+    <div class="tv">
+      <div class="card rv">
+        <div class="k">sandbox 2 · after four clean jobs</div>
+        <div class="dim"><span>spec_adherence</span><div class="t"><i data-w="100"></i></div><span class="v">1.00</span></div>
+        <div class="dim"><span>latency</span><div class="t"><i data-w="100"></i></div><span class="v">1.00</span></div>
+        <div class="dim"><span>refund_behavior</span><div class="t"><i data-w="50"></i></div><span class="v">0.50</span></div>
+        <div class="dim"><span>price_drift</span><div class="t"><i data-w="100"></i></div><span class="v">1.00</span></div>
+        <div class="dim"><span>competence · research</span><div class="t"><i data-w="100"></i></div><span class="v">1.00</span></div>
+        <div class="formula"><b>private_score</b> = 0.40·spec + 0.20·competence[category] + 0.15·latency + 0.15·refund + 0.10·price_drift<br><b>risk_premium</b> = clamp(0.65 − private_score)·1.4 + max_observed_price_drift<br><b>max_price</b> = budget · (1 − risk_premium)</div>
+      </div>
+      <div class="rv d1">
+        <div class="ladder">
+          <div class="rung"><span class="status unknown">unknown</span><span>Lives in the journal. Probe terms: staged 2x, evaluator, one retry, 10 % of budget in escrow, 21 % premium.</span></div>
+          <div class="rung"><span class="status trusted">trusted</span><span>Three clean samples. Single stage, evaluator waived, two retries, escrow cap raised 35x, no premium. Proven providers get cheaper to hire.</span></div>
+          <div class="rung"><span class="status probation">probation</span><span>Two live failures. Refused in the category that failed, 25 % of budget elsewhere, premium up to 46 %.</span></div>
+          <div class="rung"><span class="status blacklisted">blacklisted</span><span>Three live failures. Refused everywhere for 30 days, then back to probation, never to trusted without new evidence.</span></div>
+        </div>
+        <div class="terms">Every write is <b>rewritten in place</b>: one row per counterparty, updated after every job, no append-only history to grow stale. The journal keeps the per-job evidence, the entity keeps the verdict.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="deletion">
+  <div class="wrap">
+    <div class="eyebrow rv">The deletion test</div>
+    <h2 class="rv d1">Without memory GRUDGE is not weaker.<br>It is nothing.</h2>
+    <p class="lead rv d2">There is no fallback formula. <code>scripts/deletion_test.sh</code> runs three phases against a temporary database and the broker's behaviour collapses exactly where memory is removed.</p>
+    <div class="phases rv d3" id="phases">
+      <div class="phase on"><b>PHASE 1 · MEMORY UP</b>Refuses the provider that burned it and names the job.</div>
+      <div class="phase"><b>PHASE 2 · SERVICE STOPPED</b>Cannot rank, price or set terms. Exits with code 3. No decision.</div>
+      <div class="phase"><b>PHASE 3 · DATABASE WIPED</b>The grudge is gone. Hires the burned provider again, at stranger terms.</div>
+    </div>
+    <div class="term rv"><div class="bar3"><i></i><i></i><i></i></div><pre id="tty"></pre></div>
+  </div>
+</section>
+
+<section id="chain">
+  <div class="wrap">
+    <div class="eyebrow rv">On chain</div>
+    <h2 class="rv d1">All of it is on Base mainnet.</h2>
+    <p class="lead rv d2">Twenty-four ACP jobs, thirteen ERC-8004 feedback writes, three live third-party providers. The escrow, the rejection, the settlement and the feedback tagged <code>grudge</code> are all public. A selection from the recorded demo run of 5 September 2026:</p>
+    <div class="grid g2" style="margin-top:36px">
+      <div class="rv">
+        <div class="tx"><div>Session 1 · escrow funded for job 76436<br><code>0xea14c7a6…8abc9700</code></div><a class="btn" href="https://basescan.org/tx/0xea14c7a6a5b94b39698d21d8aa94d64443ae8fb2dbc9707beb1fd0008abc9700" target="_blank" rel="noopener">BaseScan</a></div>
+        <div class="tx"><div>Session 1 · job 76436 rejected, escrow returned<br><code>0xc217c054…f88a8e40a</code></div><a class="btn" href="https://basescan.org/tx/0xc217c054fd6d88e45c3ecb7479050f2781b63b267bcfac7b7e758c0f88a8e40a" target="_blank" rel="noopener">BaseScan</a></div>
+        <div class="tx"><div>Session 1 · giveFeedback value 0 on agent 84165<br><code>0x51b42e64…8e6be065</code></div><a class="btn" href="https://basescan.org/tx/0x51b42e6474e0c99cf087070e65a6d098b81063e815ba2b9c8ae76ff88e6be065" target="_blank" rel="noopener">BaseScan</a></div>
+      </div>
+      <div class="rv d1">
+        <div class="tx"><div>Session 2 · giveFeedback value 100 on agent 84571<br><code>0x09df91f0…1abc954d</code></div><a class="btn" href="https://basescan.org/tx/0x09df91f0956fdb8f922f5573a02b98b687a32c38ea475484d93a522a1abc954d" target="_blank" rel="noopener">BaseScan</a></div>
+        <div class="tx"><div>Session 3 · giveFeedback value 100, promoted to trusted<br><code>0xd92c1ac2…41f5edb0a</code></div><a class="btn" href="https://basescan.org/tx/0xd92c1ac220af98c3a9ad82e1d6d090bb78393694e87846634cedf7341f5edb0a" target="_blank" rel="noopener">BaseScan</a></div>
+        <div class="tx"><div>Every feedback write, one wallet<br><code>0x146FDa23…D3a4d532D</code></div><a class="btn" href="https://basescan.org/address/0x146FDa2361Da8192CfE857ebaE54774D3a4d532D" target="_blank" rel="noopener">BaseScan</a></div>
+      </div>
+    </div>
+    <div class="partners">
+      <div class="partner rv"><b>Sibyl Memory</b><span>Journal, entity, reference and consortium tiers. Every read and write logged.</span></div>
+      <div class="partner rv d1"><b>Virtuals ACP</b><span>Job creation, escrow funding, delivery and evaluation. acp-node-v2.</span></div>
+      <div class="partner rv d2"><b>Base</b><span>Mainnet. Escrow moves USDC, feedback lands on the registries.</span></div>
+      <div class="partner rv d3"><b>ERC-8004</b><span>Identity and reputation registries. One honest, commitment-bound vote per job.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="try">
+  <div class="wrap">
+    <div class="eyebrow rv">Try it</div>
+    <h2 class="rv d1">Ask memory who it would hire, right now.</h2>
+    <p class="lead rv d2">This panel calls the running memory service's <code>POST /decide</code> with the candidates below and prints the same ranking, terms and memoryless counterfactual the broker sees. Nothing is created on chain from here: hiring needs the Node broker and its wallet.</p>
+    <div class="try">
+      <div class="form rv d3">
+        <label>tenant</label>
+        <select id="tenant"><option value="broker-a">broker-a</option><option value="broker-b">broker-b</option></select>
+        <label>category</label>
+        <select id="category"><option>research</option><option>brief</option><option>writing</option></select>
+        <label>budget (USDC)</label>
+        <input id="budget" value="0.02">
+        <label>candidates · address · public score · quote</label>
+        <div id="cands">
+          <div class="cand"><input value="0x39d04d783e7d0a969c1c585ad26c3a5faaafee6f"><input value="0.97"><input value="0.01"></div>
+          <div class="cand"><input value="0xd82ac03aba79b88213cec1a78832d85665526036"><input value="0.85"><input value="0.01"></div>
+        </div>
+        <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap">
+          <button class="btn primary" id="run" style="cursor:pointer">Run decide</button>
+          <button class="btn" id="addc" style="cursor:pointer">+ candidate</button>
+        </div>
+        <div class="note">Sandbox 1 (0x39d0…) burned broker A twice in the demo. Sandbox 2 (0xd82a…) is trusted. Switch to broker-b to see a refusal driven by the consortium signal alone.</div>
+      </div>
+      <div class="out rv d4" id="out">← run a decision to see who memory would hire, on what terms, at what price.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><b style="color:var(--fg); font-family:var(--mono); letter-spacing:.2em">GRUDGE</b> · private memory as the hiring engine · MIT</div>
+    <div style="display:flex; gap:22px"><a href="https://github.com/big14way/grudge" target="_blank" rel="noopener">Repository</a><a href="/ui">Memory viewer</a><a href="https://github.com/big14way/grudge/issues/1" target="_blank" rel="noopener">Pilot interest</a></div>
+  </div>
+</footer>
+
+<script>
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => [...document.querySelectorAll(s)];
+
+  // reveal on scroll
+  const STATIC = location.search.includes('static') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0.12 });
+  $$('.rv').forEach((el) => STATIC ? el.classList.add('in') : io.observe(el));
+
+  // hero field: drifting nodes joined by faint edges, a private graph of counterparties
+  (() => {
+    const c = $('#field'), ctx = c.getContext('2d'); let w, h, pts = [];
+    const resize = () => { w = c.width = c.offsetWidth * devicePixelRatio; h = c.height = c.offsetHeight * devicePixelRatio; };
+    resize(); addEventListener('resize', resize);
+    for (let i = 0; i < 70; i++) pts.push({ x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * 4e-4, vy: (Math.random() - .5) * 4e-4, r: 1 + Math.random() * 1.6, k: Math.random() });
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h);
+      for (const p of pts) { p.x += p.vx; p.y += p.vy; if (p.x < 0 || p.x > 1) p.vx *= -1; if (p.y < 0 || p.y > 1) p.vy *= -1; }
+      for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+        const a = pts[i], b = pts[j], dx = (a.x - b.x) * w, dy = (a.y - b.y) * h, d = Math.hypot(dx, dy);
+        if (d < 170 * devicePixelRatio) { ctx.strokeStyle = `rgba(88,166,255,${(1 - d / (170 * devicePixelRatio)) * .18})`; ctx.lineWidth = devicePixelRatio; ctx.beginPath(); ctx.moveTo(a.x * w, a.y * h); ctx.lineTo(b.x * w, b.y * h); ctx.stroke(); }
+      }
+      for (const p of pts) { ctx.fillStyle = p.k > .85 ? 'rgba(248,81,73,.85)' : p.k > .6 ? 'rgba(63,185,80,.85)' : 'rgba(139,150,162,.7)'; ctx.beginPath(); ctx.arc(p.x * w, p.y * h, p.r * devicePixelRatio, 0, 7); ctx.fill(); }
+      requestAnimationFrame(draw);
+    };
+    draw();
+  })();
+
+  // live stats from the memory service
+  const fmt = (n) => n == null ? '–' : n.toLocaleString();
+  async function stats() {
+    try {
+      const r = await fetch('/snapshot', { cache: 'no-store' }); const d = await r.json();
+      const cps = Object.values(d.tenants || {}).reduce((n, t) => n + (t.counterparties || []).length, 0);
+      const sig = (d.consortium || []).length;
+      $('#st-reads').textContent = fmt(d.reads); $('#st-writes').textContent = fmt(d.writes); $('#st-cp').textContent = fmt(cps); $('#st-sig').textContent = fmt(sig);
+      $('#live').className = 'live'; $('#live').innerHTML = `<i></i>memory service up · ${d.db.split('/').pop()} · sibyl ${d.tier}`;
+      const rows = [];
+      for (const [t, v] of Object.entries(d.tenants || {})) for (const cp of v.counterparties || []) rows.push(`<span><b>${t}</b> ${cp.address.slice(0, 6)}…${cp.address.slice(-4)} → ${cp.status} · spec ${cp.trust.spec_adherence.toFixed(2)} · ${cp.live_failures} live failures</span>`);
+      for (const s of d.consortium || []) rows.push(`<span><b>consortium</b> ${s.address.slice(0, 6)}…${s.address.slice(-4)} ${s.status} · ${s.live_failures} failures · reported by ${(s.reporters || []).join(', ')}</span>`);
+      if (!rows.length) rows.push('<span><b>memory</b> empty · new counterparties live in the journal until 3 samples or 2 failures</span>');
+      rows.push('<span><b>rule</b> no memory, no decision · exit code 3</span>', '<span><b>chain</b> Base mainnet 8453 · ERC-8004 · Virtuals ACP</span>');
+      $('#mq').innerHTML = rows.join('') + rows.join('');
+    } catch (e) { $('#live').className = 'live off'; $('#live').innerHTML = '<i></i>memory service not answering · the broker cannot rank, price or set terms'; }
+  }
+  stats(); setInterval(stats, 4000);
+
+  // farm counter
+  (() => { const el = $('#farm'); let v = 0; const tick = () => { v = Math.min(100, v + 3); el.textContent = v; if (v < 100) requestAnimationFrame(tick); }; new IntersectionObserver((es) => { if (es[0].isIntersecting) tick(); }, { threshold: .5 }).observe(el); })();
+
+  // flow animation: a dot travels the edges while the matching step lights up
+  (() => {
+    const edges = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7'].map((id) => document.getElementById(id));
+    const nodes = ['n-broker', 'n-mem', 'n-acp', 'n-base', 'n-eval', 'n-sibyl'].map((id) => document.getElementById(id));
+    const steps = $$('#steps .step'); const dot = $('#dot');
+    // per step: edges that light up (the dot rides the first), nodes that glow
+    const plan = [
+      { e: [0, 4], n: ['n-broker', 'n-mem', 'n-sibyl'] },
+      { e: [4], n: ['n-mem', 'n-sibyl'] },
+      { e: [1, 2], n: ['n-mem', 'n-acp', 'n-base'] },
+      { e: [3], n: ['n-base', 'n-eval'] },
+      { e: [6, 4], n: ['n-eval', 'n-mem', 'n-sibyl'] },
+      { e: [5, 2], n: ['n-eval', 'n-broker', 'n-base'] },
+    ];
+    let cur = 0, t0 = performance.now(), paused = false; const MS = 3200;
+    const setStep = (i) => {
+      cur = i; t0 = performance.now();
+      steps.forEach((s, k) => { s.classList.toggle('on', k === i); const b = s.querySelector('.bar i'); b.style.animation = 'none'; void b.offsetWidth; b.style.animation = ''; });
+      edges.forEach((e, k) => e.classList.toggle('on', plan[i].e.includes(k)));
+      nodes.forEach((n) => n.classList.toggle('on', plan[i].n.includes(n.id)));
+    };
+    steps.forEach((s, k) => s.addEventListener('click', () => setStep(k)));
+    const frame = (now) => {
+      const p = Math.min(1, (now - t0) / MS); const e = edges[plan[cur].e[0]]; const L = e.getTotalLength(); const pt = e.getPointAtLength(p * L);
+      dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y);
+      if (p >= 1) setStep((cur + 1) % plan.length);
+      requestAnimationFrame(frame);
+    };
+    setStep(0); requestAnimationFrame(frame);
+  })();
+
+  // trust bars
+  new IntersectionObserver((es) => { if (es[0].isIntersecting || STATIC) $$('.dim .t i').forEach((i) => i.style.width = i.dataset.w + '%'); }, { threshold: .4 }).observe($('#trust'));
+
+  // deletion test terminal, typed
+  (() => {
+    const lines = [
+      ['dimc', '$ scripts/deletion_test.sh'],
+      ['', '== Phase 1: memory up'],
+      ['', '0x2222..2222   0.97   probation   REFUSE   burned us on job 75860; public score 0.97 ignored'],
+      ['ok', 'PASS with memory up the broker refuses the provider that burned it'],
+      ['', ''],
+      ['', '== Phase 2: memory service STOPPED'],
+      ['bad', 'GRUDGE: memory layer is gone. Cannot rank counterparties, cannot set terms, cannot price risk.'],
+      ['bad', 'There is no fallback path. Exiting with code 3.'],
+      ['ok', 'PASS without memory the broker cannot rank, price or set terms: exit code 3, no decision'],
+      ['', ''],
+      ['', '== Phase 3: database WIPED, service restarted on an empty layer'],
+      ['', '0x2222..2222   0.97   unknown     HIRE     unknown, private 0.50, premium 21%, cap 0.05'],
+      ['ok', 'PASS with memory wiped the grudge is gone: broker hires 0x2222..2222 again, the top public score, at stranger terms'],
+      ['', ''],
+      ['ok', "PASS all three phases. GRUDGE's decisions exist only while its memory does."],
+    ];
+    const pre = $('#tty'); const phases = $$('#phases .phase'); let started = false;
+    const type = async () => {
+      let html = '';
+      for (const [cls, text] of lines) {
+        if (text.startsWith('== Phase')) { const k = Number(text[9]) - 1; phases.forEach((p, i) => p.classList.toggle('on', i === k)); }
+        let cur = '';
+        for (const ch of text) { cur += ch; pre.innerHTML = html + `<span class="${cls}">${cur}</span><span class="caret"></span>`; await new Promise((r) => setTimeout(r, text.length > 60 ? 6 : 14)); }
+        html += `<span class="${cls}">${text}</span>\n`; pre.innerHTML = html + '<span class="caret"></span>';
+        await new Promise((r) => setTimeout(r, text ? 260 : 80));
+      }
+    };
+    new IntersectionObserver((es) => { if (es[0].isIntersecting && !started) { started = true; type(); } }, { threshold: .3 }).observe(pre);
+  })();
+
+  // try it: POST /decide
+  const short = (a) => a.slice(0, 6) + '…' + a.slice(-4);
+  $('#addc').onclick = () => { const d = document.createElement('div'); d.className = 'cand'; d.innerHTML = '<input placeholder="0x…"><input value="0.5"><input value="0.01">'; $('#cands').appendChild(d); };
+  $('#run').onclick = async () => {
+    const out = $('#out'); out.textContent = 'asking memory…';
+    const candidates = $$('#cands .cand').map((c) => { const [a, p, q] = [...c.querySelectorAll('input')].map((i) => i.value.trim()); return a ? { address: a, public_score: Number(p), quoted_price_usdc: Number(q) } : null; }).filter(Boolean);
+    try {
+      const r = await fetch('/decide', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Grudge-Tenant': $('#tenant').value }, body: JSON.stringify({ job: { category: $('#category').value, budget_usdc: Number($('#budget').value) }, candidates }) });
+      const d = await r.json();
+      if (!r.ok) { out.innerHTML = `<span class="reason">${d.error || r.statusText}</span>`; return; }
+      const T = (t) => `stages ${t.stages} · evaluator ${t.require_evaluator ? 'yes' : 'no'} · retries ${t.retry_budget} · job cap ${t.max_job_usdc} USDC · dispute ${t.dispute_window_s}s`;
+      const rows = (d.ranked || []).map((c) => `<tr><td>${short(c.address)}</td><td>${c.public_score ?? '–'}</td><td><span class="status ${c.status || 'unknown'}">${c.status || 'unknown'}</span></td><td>${c.private_score.toFixed(2)}</td><td>${Math.round(c.risk_premium * 100)}%</td><td>${c.max_price_usdc}</td><td>${c.verdict.toUpperCase()}</td></tr><tr><td colspan="7" class="${c.verdict === 'refuse' ? 'reason' : 'dimc'}">${c.reason}</td></tr>`).join('');
+      const h = d.chosen, cf = d.counterfactual;
+      out.innerHTML = `<table><tr><th>provider</th><th>public</th><th>status</th><th>private</th><th>premium</th><th>max price</th><th>verdict</th></tr>${rows}</table>` +
+        (h ? `\n→ HIRE ${short(h.address)} (${h.status}, private ${h.private_score.toFixed(2)}, pay ≤ ${h.max_price_usdc} USDC)\n   ${T(h.terms)}` : `\n→ no acceptable provider: every candidate refused`) +
+        (cf ? `<div class="cf"><b>WITHOUT MEMORY:</b> hire ${short(cf.address)} (top public ${cf.public_score}), single job, no evaluator, 0 retries, escrow ${cf.max_price_usdc} USDC\n   memory knows this provider as ${cf.memory_says} with ${cf.live_failures} live failures\n<b>WITH MEMORY:</b>    ${h ? (cf.delta.provider_changed ? `different provider (${short(h.address)})` : 'same provider') + `; escrow cap ${cf.delta.escrow_cap}, max price ${cf.delta.max_price}, stages ${cf.delta.staged}, evaluator ${cf.delta.evaluator}, retries ${cf.delta.retries}` : 'refuse'}</div>` : '') +
+        `\n<span class="dimc">decided ${d.decided_at} · raw response in the console</span>`;
+      console.log('decide', d);
+    } catch (e) { out.innerHTML = `<span class="reason">memory service not answering: ${e.message}</span>`; }
+  };
+</script>
+</body>
+</html>

@@ -20,6 +20,7 @@ Routes (JSON in, JSON out). Tenant comes from the X-Grudge-Tenant header or a
   GET  /spec/<category>     PUT /spec/<category>
   GET  /state/<key>         PUT /state/<key>
   POST /query/multi     {query}
+  GET  /                landing page (what GRUDGE is, how it works, try a decision)
   GET  /ui              thin live viewer (reads bypass the memory op counters)
   GET  /snapshot        viewer data
   GET  /log?after=N     [MEMORY] log lines after sequence N
@@ -126,8 +127,9 @@ def make_handler(store: MemoryStore):
             return None
 
         def do_GET(self) -> None:
-            if urlparse(self.path).path in ("/ui", "/ui/"):
-                data = (Path(__file__).parent / "ui.html").read_bytes()
+            page = {"/": "landing.html", "/index.html": "landing.html", "/ui": "ui.html", "/ui/": "ui.html"}.get(urlparse(self.path).path)
+            if page:
+                data = (Path(__file__).parent / page).read_bytes()
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(data)))

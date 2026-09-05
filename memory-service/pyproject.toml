@@ -20,4 +20,4 @@ build-backend = "setuptools.build_meta"
 packages = ["grudge_memory"]
 
 [tool.setuptools.package-data]
-grudge_memory = ["ui.html"]
+grudge_memory = ["ui.html", "landing.html"]
