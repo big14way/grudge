@@ -21,6 +21,7 @@ Sibyl Labs hackathon, September 2026. Base mainnet. MIT. **Demo video: [youtu.be
 11. [Where memory is read and written](#11-where-memory-is-read-and-written)
 12. [Audience and evidence](#12-audience-and-evidence)
 13. [Prior work declaration](#13-prior-work-declaration)
+14. [Prize payout](#14-prize-payout)
 
 ---
 
@@ -330,6 +331,16 @@ All Sibyl access lives in `memory-service/grudge_memory/store.py`. [docs/MEMORY_
 GRUDGE was written from scratch inside the build window, 1 to 10 September 2026, with a fresh `git init` and a real commit history. No code was reused from any earlier project by the authors or anyone else. Public documentation and specifications were read for orientation, in particular the ERC-8004 text and the Virtuals ACP and Sibyl Memory SDK sources, and no code was copied from any repository. The idea that trust between two agents is a vector rather than a universal scalar is taken from the ERC-8004 authors' own framing; the private per-counterparty trust vector, the memory-driven terms and pricing, the journal-to-entity promotion and the consortium signal are this project's own design.
 
 Dependencies: `sibyl-memory-client` 0.8.0 (MIT), `@virtuals-protocol/acp-node-v2` 0.1.12 (ISC), `viem` (MIT). ERC-8004 registries on Base by their authors.
+
+## 14. Prize payout
+
+Payout wallet for the hackathon prize, USDC on Base mainnet (chain 8453):
+
+```
+0x56ac6bc846956e327c57c5a22c50c03ffb72bd09
+```
+
+[View on Basescan](https://basescan.org/address/0x56ac6bc846956e327c57c5a22c50c03ffb72bd09). This is a plain externally owned account, not one of the sponsored Virtuals ACP wallets used in the demo, so it can receive any transfer.
 
 ---
 
