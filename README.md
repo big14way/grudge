@@ -337,10 +337,10 @@ Dependencies: `sibyl-memory-client` 0.8.0 (MIT), `@virtuals-protocol/acp-node-v2
 Payout wallet for the hackathon prize, USDC on Base mainnet (chain 8453):
 
 ```
-0x56ac6bc846956e327c57c5a22c50c03ffb72bd09
+0x3C343AD077983371b29fee386bdBC8a92E934C51
 ```
 
-[View on Basescan](https://basescan.org/address/0x56ac6bc846956e327c57c5a22c50c03ffb72bd09). This is a plain externally owned account, not one of the sponsored Virtuals ACP wallets used in the demo, so it can receive any transfer.
+[View on Basescan](https://basescan.org/address/0x3C343AD077983371b29fee386bdBC8a92E934C51). This is a regular user wallet, not one of the sponsored Virtuals ACP wallets used in the demo, so it can receive any transfer.
 
 ---
 
